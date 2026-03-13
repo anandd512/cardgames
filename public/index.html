@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>CardGames Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+
+<div id="lobby" class="screen scrollable active">
+  <div class="lobby-bg"></div>
+  <header class="lobby-header">
+    <div class="logo">
+      <span class="logo-suit">♠</span>
+      <span class="logo-text">CardGames</span>
+      <span class="logo-sub">Play. Spectate. React.</span>
+    </div>
+  </header>
+
+  <main class="lobby-main">
+    <div class="lobby-panel wide">
+      <div class="lobby-columns">
+        <div class="lobby-col-left">
+          <div>
+            <h2 class="panel-title">Choose A Game</h2>
+            <p class="panel-sub">Choose your card battle mode and launch a room.</p>
+          </div>
+          <div class="game-grid" id="gameGrid">
+            <button class="game-tile selected" data-game="spades">
+              <div class="game-title">Spades</div>
+              <div class="game-status live">Live</div>
+            </button>
+            <button class="game-tile" data-game="judgement">
+              <div class="game-title">Judgement</div>
+              <div class="game-status live">Live</div>
+            </button>
+            <button class="game-tile" data-game="dehla">
+              <div class="game-title">Dehla Pakad</div>
+              <div class="game-status live">Live</div>
+            </button>
+          </div>
+          <div class="name-row">
+            <label for="totalRounds">Total Rounds (Judgement / Dehla)</label>
+            <input id="totalRounds" type="text" value="7" maxlength="2" autocomplete="off" />
+          </div>
+          <div class="rules-toggle-row">
+            <button class="btn btn-ghost" id="btnRulesToggle">Show Rules</button>
+          </div>
+          <div class="rules-panel hidden" id="rulesPanel">
+            <h3 id="rulesTitle">Spades Rule Guide</h3>
+            <ul id="rulesContent"></ul>
+          </div>
+          <div class="name-row">
+            <label for="playerName">Your Name</label>
+            <input id="playerName" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off" />
+          </div>
+          <div class="lobby-actions">
+            <button class="btn btn-primary" id="btnCreate"><span class="btn-icon">✦</span> Create Room</button>
+            <div class="divider"><span>or</span></div>
+            <div class="join-row">
+              <input id="joinCode" type="text" placeholder="Room code" maxlength="6" autocomplete="off" />
+              <button class="btn btn-secondary" id="btnJoin">Join</button>
+            </div>
+            <div class="divider"><span>viewer mode</span></div>
+            <button class="btn btn-ghost" id="btnSimulate"><span class="btn-icon">▶</span> Watch AI Simulation</button>
+          </div>
+          <div id="lobbyError" class="error-msg hidden"></div>
+        </div>
+        <div class="lobby-col-right">
+          <h2 class="panel-title">Pick Your Avenger</h2>
+          <div class="avatar-picker" id="avatarPicker">
+            <div class="avatar-grid">
+              <button class="avatar-btn selected" data-avatar="ironman" title="Iron Man">
+                <img src="/assets/avatars/Iron%20man.png" alt="Iron Man" draggable="false">
+                <span>Iron Man</span>
+              </button>
+              <button class="avatar-btn" data-avatar="captain" title="Captain America">
+                <img src="/assets/avatars/Captain%20America.png" alt="Captain America" draggable="false">
+                <span>Cap</span>
+              </button>
+              <button class="avatar-btn" data-avatar="thor" title="Thor">
+                <img src="/assets/avatars/Thor.png" alt="Thor" draggable="false">
+                <span>Thor</span>
+              </button>
+              <button class="avatar-btn" data-avatar="hulk" title="Hulk">
+                <img src="/assets/avatars/Hulk.png" alt="Hulk" draggable="false">
+                <span>Hulk</span>
+              </button>
+              <button class="avatar-btn" data-avatar="blackwidow" title="Black Widow">
+                <img src="/assets/avatars/Black%20widow.png" alt="Black Widow" draggable="false">
+                <span>Widow</span>
+              </button>
+              <button class="avatar-btn" data-avatar="hawkeye" title="Hawkeye">
+                <img src="/assets/avatars/Hawk%20eye.png" alt="Hawkeye" draggable="false">
+                <span>Hawkeye</span>
+              </button>
+              <button class="avatar-btn" data-avatar="strange" title="Doctor Strange">
+                <img src="/assets/avatars/Doctor%20strange.png" alt="Doctor Strange" draggable="false">
+                <span>Strange</span>
+              </button>
+              <button class="avatar-btn" data-avatar="panther" title="Black Panther">
+                <img src="/assets/avatars/Black%20panther.png" alt="Black Panther" draggable="false">
+                <span>Panther</span>
+              </button>
+              <button class="avatar-btn" data-avatar="scarletwitch" title="Scarlet Witch">
+                <img src="/assets/avatars/Scarlet%20witch.png" alt="Scarlet Witch" draggable="false">
+                <span>Scarlet</span>
+              </button>
+              <button class="avatar-btn" data-avatar="thanos" title="Thanos">
+                <img src="/assets/avatars/Thanos.png" alt="Thanos" draggable="false">
+                <span>Thanos</span>
+              </button>
+              <button class="avatar-btn" data-avatar="spiderman" title="Spider-Man">
+                <img src="/assets/avatars/Spiderman.png" alt="Spider-Man" draggable="false">
+                <span>Spidey</span>
+              </button>
+              <button class="avatar-btn" data-avatar="captainmarvel" title="Captain Marvel">
+                <img src="/assets/avatars/Captain%20Marvel.png" alt="Captain Marvel" draggable="false">
+                <span>Marvel</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="waitingRoom" class="screen scrollable">
+  <div class="waiting-bg"></div>
+  <div class="waiting-panel">
+    <h2>Waiting for Players</h2>
+    <div class="room-code-display">Room: <strong id="displayRoomCode">------</strong> <button class="btn-copy" id="btnCopyCode" title="Copy room code">⧉</button></div>
+
+    <div class="seats-grid">
+      <div class="seat-slot" data-seat="2"><div class="seat-direction">North</div><div class="seat-avatar" id="seat2"></div><div class="seat-team team-0" id="seatTeam2">-</div></div>
+      <div class="seats-middle-row">
+        <div class="seat-slot" data-seat="1"><div class="seat-direction">West</div><div class="seat-avatar" id="seat1"></div><div class="seat-team team-1" id="seatTeam1">-</div></div>
+        <div class="table-center-icon" id="waitingCenterIcon">♠</div>
+        <div class="seat-slot" data-seat="3"><div class="seat-direction">East</div><div class="seat-avatar" id="seat3"></div><div class="seat-team team-1" id="seatTeam3">-</div></div>
+      </div>
+      <div class="seat-slot" data-seat="0"><div class="seat-direction">South (You)</div><div class="seat-avatar" id="seat0"></div><div class="seat-team team-0" id="seatTeam0">-</div></div>
+    </div>
+
+    <div class="waiting-actions">
+      <button class="btn btn-ghost" id="btnFillBots">Fill Empty Seats with AI</button>
+      <button class="btn btn-primary" id="btnStartGame" disabled>Start Game</button>
+    </div>
+    <div id="waitingError" class="error-msg hidden"></div>
+  </div>
+</div>
+
+<div id="gameTable" class="screen">
+  <!-- ── Left: table + south hand ───────────────────────────── -->
+  <div class="game-left">
+    <div class="table-wrapper">
+      <div class="table-scene">
+        <div class="player-zone zone-north" id="zoneNorth">
+          <div class="player-left">
+            <div class="player-illustration" id="avatarNorth">🦴</div>
+            <span class="pname" id="nameNorth">-</span>
+          </div>
+          <div class="player-right" id="infoNorth">
+            <div class="turn-clock" id="clockNorth"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+            <span class="pbid" id="bidNorth"></span>
+            <span class="ptricks" id="tricksNorth"></span>
+          </div>
+        </div>
+        <div class="player-zone zone-west" id="zoneWest">
+          <div class="player-left">
+            <div class="player-illustration" id="avatarWest">🛡️</div>
+            <span class="pname" id="nameWest">-</span>
+          </div>
+          <div class="player-right" id="infoWest">
+            <div class="turn-clock" id="clockWest"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+            <span class="pbid" id="bidWest"></span>
+            <span class="ptricks" id="tricksWest"></span>
+          </div>
+        </div>
+        <div class="player-zone zone-east" id="zoneEast">
+          <div class="player-left">
+            <div class="player-illustration" id="avatarEast">⚡</div>
+            <span class="pname" id="nameEast">-</span>
+          </div>
+          <div class="player-right" id="infoEast">
+            <div class="turn-clock" id="clockEast"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+            <span class="pbid" id="bidEast"></span>
+            <span class="ptricks" id="tricksEast"></span>
+          </div>
+        </div>
+        <div class="player-zone zone-south" id="zoneSouth">
+          <div class="player-left">
+            <div class="player-illustration" id="avatarSouth">💚</div>
+            <span class="pname" id="nameSouth">-</span>
+          </div>
+          <div class="player-right" id="infoSouth">
+            <div class="turn-clock" id="clockSouth"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+            <span class="pbid" id="bidSouth"></span>
+            <span class="ptricks" id="tricksSouth"></span>
+            <span class="your-turn-badge hidden" id="yourTurnBadge">YOUR TURN</span>
+          </div>
+        </div>
+        <div class="felt-table" id="feltTable">
+          <div class="opponent-hand hand-north" id="handNorth"></div>
+          <div class="opponent-hand hand-west" id="handWest"></div>
+          <div class="opponent-hand hand-east" id="handEast"></div>
+          <div class="trick-area" id="trickArea">
+            <div class="trick-slot trick-north" id="trickNorth"></div>
+            <div class="trick-slot trick-west" id="trickWest"></div>
+            <div class="trick-slot trick-center" id="trickCenter"><span class="center-suit">♠</span></div>
+            <div class="trick-slot trick-east" id="trickEast"></div>
+            <div class="trick-slot trick-south" id="trickSouth"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hand-area" id="handSouth"></div>
+    <div class="turn-indicator" id="turnIndicator"></div>
+    <div class="bid-flash hidden" id="bidFlash"></div>
+    <div class="bid-trump-banner hidden" id="bidTrumpBanner"></div>
+    <div class="round-winner-banner hidden" id="roundWinnerBanner"></div>
+  </div>
+
+  <!-- ── Right: all panels ───────────────────────────────────── -->
+  <div class="game-sidebar">
+    <div class="hud-scores">
+      <div class="score-team team-ns"><span class="team-label" id="teamLabelNS">North / South</span><span class="team-score" id="scoreNS">0</span><span class="team-bags" id="bagsNS">bags: 0</span></div>
+      <div class="score-divider">VS</div>
+      <div class="score-team team-ew"><span class="team-label" id="teamLabelEW">East / West</span><span class="team-score" id="scoreEW">0</span><span class="team-bags" id="bagsEW">bags: 0</span></div>
+    </div>
+
+    <div class="right-panel" id="rightPanel">
+      <div class="rp-section-title">Round Board</div>
+      <div class="round-item"><span>Round</span><span id="roundBadge">1</span></div>
+      <div class="round-item"><span id="specialRuleLabel">Spades</span><span id="spadesBrokenBadge" class="badge hidden">Broken</span></div>
+      <div class="round-item"><span>Trump</span><span id="trumpSuitBadge" class="badge hidden"></span></div>
+      <div class="round-item"><span>Contract</span><span id="contractBadge" class="badge hidden"></span></div>
+      <div class="rp-divider"></div>
+      <div class="rp-section-title">Match Story</div>
+      <div class="scorecard-row"><span>Leader</span><span id="leaderLine">Tie game</span></div>
+      <div class="scorecard-row"><span>Lead Margin</span><span id="leadLine">0 pts</span></div>
+      <div class="scorecard-row"><span id="toWinLabel">To Win (NS / EW)</span><span id="toWinLine">--</span></div>
+      <div class="scorecard-row"><span>Round Result</span><span id="roundResultLine">--</span></div>
+      <div class="judgement-guide hidden" id="judgementGuide">
+        <div class="guide-title" id="liveGuideTitle">Judgement Live Rule</div>
+        <div class="guide-row"><span>Contract</span><span id="jgContract">--</span></div>
+        <div class="guide-row"><span>Defenders</span><span id="jgDefender">--</span></div>
+        <div class="guide-row"><span>Progress</span><span id="jgProgress">--</span></div>
+        <div class="guide-note" id="jgNote">Round ends as soon as one side hits target.</div>
+      </div>
+    </div>
+
+    <div class="reactions-panel">
+      <button class="reaction-btn" data-reaction="laugh" title="Laugh">😂</button>
+      <button class="reaction-btn" data-reaction="cry" title="Cry">😢</button>
+      <button class="reaction-btn" data-reaction="well_played" title="Well Played">👏</button>
+      <button class="reaction-btn" data-reaction="angry" title="Angry">😠</button>
+      <button class="reaction-btn" data-reaction="fire" title="Fire">🔥</button>
+    </div>
+
+
+  </div>
+</div>
+
+<div id="bidModal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-box">
+    <h3>Place Your Bid</h3>
+    <p class="bid-tip" id="bidTip">How many tricks will you take?</p>
+    <div class="bid-options" id="bidOptions"></div>
+    <p class="nil-note" id="bidNote">Bid <strong>0</strong> for <em>Nil</em>.</p>
+  </div>
+</div>
+
+<div id="trumpModal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-box">
+    <h3>Choose Trump</h3>
+    <p class="bid-tip">Pick the trump suit for this round.</p>
+    <div class="bid-options" id="trumpOptions"></div>
+    <p class="nil-note">If timer expires, trump defaults to <strong>Spades</strong>.</p>
+  </div>
+</div>
+
+<div id="roundEndModal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-box round-end-box">
+    <h3 id="roundEndTitle">Round Over</h3>
+    <div class="round-scores" id="roundScores"></div>
+  </div>
+</div>
+
+<div id="gameOverModal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-box game-over-box">
+    <div class="trophy">🏆</div>
+    <h2 id="gameOverTitle">Team Wins!</h2>
+    <div class="final-scores" id="finalScores"></div>
+    <button class="btn btn-primary" id="btnPlayAgain">Play Again</button>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<div id="reactionsLayer" class="reactions-layer"></div>
+
+<audio id="bgmAudio" loop preload="none" src="/assets/music/monume-retro-arcade-game-music-2-498031.mp3"></audio>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/client.js"></script>
+</body>
+</html>
