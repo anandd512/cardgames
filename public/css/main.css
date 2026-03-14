@@ -553,10 +553,10 @@ input[type="text"] {
 }
 @keyframes trickIn { from { transform: scale(0.7) translateY(-20px); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-.trick-area.fly-south .trick-card { animation: flySouth 0.85s ease forwards; }
-.trick-area.fly-west .trick-card { animation: flyWest 0.85s ease forwards; }
-.trick-area.fly-north .trick-card { animation: flyNorth 0.85s ease forwards; }
-.trick-area.fly-east .trick-card { animation: flyEast 0.85s ease forwards; }
+.trick-area.fly-south .trick-card { animation: flySouth 0.85s ease forwards 1s; }
+.trick-area.fly-west .trick-card { animation: flyWest 0.85s ease forwards 1s; }
+.trick-area.fly-north .trick-card { animation: flyNorth 0.85s ease forwards 1s; }
+.trick-area.fly-east .trick-card { animation: flyEast 0.85s ease forwards 1s; }
 @keyframes flySouth { to { transform: translateY(145px) scale(0.75); opacity: 0; } }
 @keyframes flyNorth { to { transform: translateY(-145px) scale(0.75); opacity: 0; } }
 @keyframes flyWest { to { transform: translateX(-170px) scale(0.75); opacity: 0; } }
@@ -1167,4 +1167,23 @@ body.is-mobile .m-trick-area .trick-card .suit-mini { font-size: 12px; }
 body.is-mobile .avatar-btn img { max-width: 60px; height: auto; }
 body.is-mobile .game-grid { grid-template-columns: 1fr 1fr; }
 body.is-mobile .avatar-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 4px; }
+
+
+
+/* Mobile Toast Overrides */
+body.is-mobile .toast {
+  bottom: auto;
+  top: 16px;
+  width: 92vw;
+  text-align: center;
+  transform: translateX(-50%) translateY(-30px);
+}
+body.is-mobile .toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+
+/* Mobile ingame avatar fix */
+body.is-mobile .m-avatar-wrap img { object-fit: contain; }
+body.is-mobile .m-avatar-small img { object-fit: contain; }
 

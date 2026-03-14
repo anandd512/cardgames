@@ -543,13 +543,14 @@ loadMusicPrefs();
 applyMusicSettings();
 
 let turnDelayTimer = null;
+let bannerDelayTimer = null;
 let latestGameState = null;
 
 socket.on('gameState', (state) => {
   selectedGame = state.gameType || selectedGame;
   handleStateSfx(lastState, state);
   handleBidFlash(lastState, state);
-  handleBidTrumpAnnouncement(lastState, state);
+  const bannerDelay = handleBidTrumpAnnouncement(lastState, state);
   latestGameState = state;
 
   const wasSamePhase = lastState && lastState.phase === state.phase;
@@ -568,7 +569,23 @@ socket.on('gameState', (state) => {
                         (screens.mobileGame && screens.mobileGame.classList.contains('active'));
   
   if (isGameVisible) {
-    if (wasSamePhase && seatChanged && isPlayingOrBidding) {
+    clearTimeout(turnDelayTimer);
+    clearTimeout(bannerDelayTimer);
+
+    if (bannerDelay > 0) {
+      // Pause updates completely while the banner shows (2600ms or so)
+      const fakeState = JSON.parse(JSON.stringify(state));
+      fakeState.currentSeat = -1;
+      // Also hide cards during banner
+      if (fakeState.phase === 'playing' && fakeState.currentTrick.length === 0) {
+        fakeState.phase = 'trump_selection'; // trick the UI into hiding turn indicators
+      }
+      renderTable(fakeState);
+
+      bannerDelayTimer = setTimeout(() => {
+        if (latestGameState) renderTable(latestGameState);
+      }, bannerDelay);
+    } else if (wasSamePhase && seatChanged && isPlayingOrBidding) {
       // Pause 1 second before highlighting next person's turn visually
       const fakeState = JSON.parse(JSON.stringify(state));
       // Give it an invalid seat so no one highlights 'Your turn'
@@ -576,12 +593,10 @@ socket.on('gameState', (state) => {
       
       renderTable(fakeState);
       
-      clearTimeout(turnDelayTimer);
       turnDelayTimer = setTimeout(() => {
         if (latestGameState) renderTable(latestGameState);
       }, 1000);
     } else {
-      clearTimeout(turnDelayTimer);
       renderTable(state);
     }
   }
@@ -1189,13 +1204,13 @@ function showRoundWinnerBanner(state) {
 }
 
 function handleBidTrumpAnnouncement(prev, next) {
-  if (!prev) return;
+  if (!prev) return 0;
 
   if (next.gameType === 'judgement') {
     // Bidding complete → trump selection: show bid winner + team totals immediately
     if (prev.phase === 'bidding' && next.phase === 'trump_selection') {
       const winnerSeat = next.lastBidWinnerSeat;
-      const winnerName = winnerSeat !== null && winnerSeat !== undefined
+      const winnerName = winnerSeat !== null && winnerSeat !== undefined 
         ? safeName(next.players[winnerSeat], SEAT_LABELS[winnerSeat])
         : 'Unknown';
       const [team0Name, team1Name] = getTeamDisplayNames(next);
@@ -1204,7 +1219,7 @@ function handleBidTrumpAnnouncement(prev, next) {
       const ew = (bids[1] || 0) + (bids[3] || 0);
       showBidTrumpBannerHTML(`🏆 ${winnerName} won the bid!`);
       showToast(`🏆 ${winnerName} won the bid! — ${team0Name}: ${ns} | ${team1Name}: ${ew} — choosing trump…`, 5000);
-      return;
+      return 2600;
     }
 
     // Trump chosen → playing: show only trump suit toast
@@ -1218,7 +1233,7 @@ function handleBidTrumpAnnouncement(prev, next) {
       const dTarget = next.defenderTarget || '?';
       showBidTrumpBannerHTML(`Trump ${trumpIcon} ${trumpName} • ${cTeamName}: ${cTarget} / ${dTeamName}: ${dTarget}`);
       showToast(`Trump is ${trumpName}! ${cTeamName} needs ${cTarget} tricks, ${dTeamName} needs ${dTarget}`, 4000);
-      return;
+      return 2600;
     }
   }
 
@@ -1227,9 +1242,10 @@ function handleBidTrumpAnnouncement(prev, next) {
       const icon = formatSuitHTML(next.trumpSuit);
       const suitName = next.trumpSuit.charAt(0).toUpperCase() + next.trumpSuit.slice(1);
       showBidTrumpBannerHTML(`Trump established: ${icon} ${suitName}`);
+      return 2600;
     }
   }
-}
+  return 0;
 
 function showBidTrumpBanner(text) {
   showBidTrumpBannerHTML(text);
