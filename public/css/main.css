@@ -90,7 +90,7 @@ body {
   backdrop-filter: blur(8px);
   padding: 16px 20px;
 }
-.lobby-panel.wide { max-width: min(560px, 94vw); }
+.lobby-panel.wide { max-width: min(700px, 94vw); max-height: calc(100vh - 130px); overflow-y: auto; scrollbar-width: none; }
 .lobby-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
 .lobby-col-left { display: flex; flex-direction: column; gap: 10px; }
 .lobby-col-right { display: flex; flex-direction: column; gap: 12px; border-left: 1px solid var(--panel-border); padding-left: 28px; }
@@ -222,7 +222,7 @@ input.input-error { border-color: rgba(255, 93, 143, 0.80); box-shadow: 0 0 0 2p
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
-  padding: 14px;
+  padding: 20px 16px;
   text-align: left;
   cursor: pointer;
   transition: background 140ms, border-color 140ms, transform 130ms, box-shadow 130ms;
@@ -230,7 +230,7 @@ input.input-error { border-color: rgba(255, 93, 143, 0.80); box-shadow: 0 0 0 2p
 .game-tile:hover:not(:disabled) { background: rgba(255,255,255,0.10); transform: translateY(-2px); }
 .game-tile.selected { border-color: var(--mint); box-shadow: 0 0 0 2px rgba(89, 244, 197, 0.22); background: rgba(89, 244, 197, 0.07); }
 .game-tile:disabled { opacity: 0.55; cursor: default; }
-.game-icon { font-size: 28px; margin-bottom: 6px; line-height: 1; }
+.game-icon { font-size: 38px; margin-bottom: 6px; line-height: 1; }
 .game-title { font-size: 20px; font-weight: 700; }
 .game-meta { color: var(--muted); font-size: 13px; margin-top: 3px; }
 .game-status { margin-top: 8px; font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.08em; }
@@ -1172,6 +1172,9 @@ input[type="text"] {
 .m-side-zone .m-pname-small  { font-size: var(--fs-xs); max-width: 50px; }
 .m-side-zone .m-ptricks-small { font-size: var(--fs-2xs); }
 .m-side-zone .m-pbid-small    { font-size: var(--fs-2xs); }
+.m-side-zone .m-clock-small   { width: 24px; height: 24px; }
+.m-side-zone .m-clock-small .clock-hand { height: 7px; }
+.m-side-zone .m-clock-small .clock-dot  { width: 5px; height: 5px; }
 
 /* Side zones (W / E) — superseded by .m-player-overlay */
 .m-player-side { display: none; }
@@ -1240,7 +1243,7 @@ input[type="text"] {
 
 /* Opponent hand card backs on felt */
 .m-opp-hand { position: absolute; display: flex; pointer-events: none; }
-.m-hand-north { top: 7px; left: 50%; transform: translateX(-50%); }
+.m-hand-north { display: none; }
 .m-hand-west  { display: none; }
 .m-hand-east  { display: none; }
 .m-felt .card-back { width: 22px; height: 32px; margin: 0 -6px; border-radius: 4px; }
@@ -1332,10 +1335,26 @@ input[type="text"] {
 /* Mobile lobby: single-column */
 body.is-mobile .lobby-columns           { grid-template-columns: 1fr; gap: 14px; }
 body.is-mobile .lobby-col-right         { border-left: none; padding-left: 0; border-top: 1px solid var(--panel-border); padding-top: 14px; }
-body.is-mobile .lobby-panel.wide        { width: 96vw; max-height: none; }
+body.is-mobile #lobby {
+  position: fixed !important;
+  inset: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden;
+  padding: 6px 12px;
+  justify-content: flex-start;
+}
+body.is-mobile .lobby-header    { margin-bottom: 4px; }
+body.is-mobile .logo-text       { font-size: 18px; }
+body.is-mobile .logo-suit       { font-size: 22px; }
+body.is-mobile .lobby-main      { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 96vw; }
+body.is-mobile .lobby-panel.wide        { width: 96vw; max-height: none; flex: 1; min-height: 0; overflow-y: auto; }
 body.is-mobile .avatar-grid             { grid-template-columns: repeat(4, 1fr); }
 body.is-mobile .game-grid               { gap: 8px; }
 body.is-mobile #gameTable               { display: none !important; }
+body.is-mobile .m-trick-area .center-suit { font-size: 23px; }
+body.is-mobile .panel-title             { font-size: var(--fs-lg); }
+body.is-mobile .panel-sub               { font-size: var(--fs-xs); margin-bottom: 6px; }
+body.is-mobile .step-label-row          { margin-bottom: 10px; }
 
 /* Mobile Card Overrides */
 body.is-mobile .card .pip-center { display: none !important; }
