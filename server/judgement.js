@@ -14,6 +14,7 @@ const MIN_BID = 6;
 const MAX_BID = 13;
 
 const GAME_PHASES = {
+  BIDDING_PAUSE: 'bidding_pause',
   WAITING: 'waiting',
   BIDDING: 'bidding',
   TRUMP_SELECTION: 'trump_selection',
@@ -120,8 +121,9 @@ function placeBid(game, seat, bid) {
     game.biddingWinnerTeam = team0Sum >= team1Sum ? 0 : 1;
     game.trumpChooserSeat = _pickTrumpChooserSeat(game, game.biddingWinnerTeam);
     game.lastBidWinnerSeat = game.trumpChooserSeat;
-    game.phase = GAME_PHASES.TRUMP_SELECTION;
+    game.phase = GAME_PHASES.BIDDING_PAUSE;
     game.currentSeat = game.trumpChooserSeat;
+    return { ok: true, biddingComplete: true };
 
     _log(game, `Team 1 bid sum: ${team0Sum}. Team 2 bid sum: ${team1Sum}.`);
     if (team0Sum === team1Sum) {
@@ -130,6 +132,13 @@ function placeBid(game, seat, bid) {
     _log(game, `${SEATS[game.trumpChooserSeat]} will choose trump.`);
   }
 
+  return { ok: true };
+}
+
+function advanceAfterBiddingPause(game) {
+  if (game.phase !== GAME_PHASES.BIDDING_PAUSE) return { error: 'Not in bidding pause' };
+  game.phase = GAME_PHASES.TRUMP_SELECTION;
+  game.currentSeat = game.trumpChooserSeat;
   return { ok: true };
 }
 
@@ -406,6 +415,7 @@ module.exports = {
   dealRound,
   placeBid,
   chooseTrump,
+  advanceAfterBiddingPause,
   playCard,
   advanceAfterTrickPause,
   getLegalCards,

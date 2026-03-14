@@ -1208,7 +1208,7 @@ function handleBidTrumpAnnouncement(prev, next) {
 
   if (next.gameType === 'judgement') {
     // Bidding complete → trump selection: show bid winner + team totals immediately
-    if (prev.phase === 'bidding' && next.phase === 'trump_selection') {
+    if ((prev.phase === 'bidding' || prev.phase === 'bidding_pause') && next.phase === 'trump_selection') {
       const winnerSeat = next.lastBidWinnerSeat;
       const winnerName = winnerSeat !== null && winnerSeat !== undefined 
         ? safeName(next.players[winnerSeat], SEAT_LABELS[winnerSeat])

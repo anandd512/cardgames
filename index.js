@@ -34,6 +34,7 @@ const BOT_BID_MS_MAX = 3200;
 const BOT_PLAY_MS_MIN = 1400;
 const BOT_PLAY_MS_MAX = 2500;
 const TRICK_PAUSE_MS = 1800;
+const BIDDING_PAUSE_MS = 2000;
 const ROUND_PAUSE_MS = 5000;
 const TURN_TIMEOUT_MS = 15000;
 const BIDDING_TURN_TIMEOUT_MS = 60000;
@@ -103,6 +104,12 @@ function playCardForGame(game, seat, cardId) {
 
 function advanceAfterTrickPauseForGame(game) {
   return getEngine(game).advanceAfterTrickPause(game);
+}
+
+function advanceAfterBiddingPauseForGame(game) {
+  const engine = getEngine(game);
+  if (!engine.advanceAfterBiddingPause) return null;
+  return engine.advanceAfterBiddingPause(game);
 }
 
 function getPublicStateForGame(game, seat) {
@@ -228,6 +235,23 @@ function scheduleTurnTimer(game) {
 }
 
 function handleActionResult(game, result) {
+  if (result && result.biddingComplete) {
+    clearTurnTimer(game.roomId);
+    game.turnDeadlineTs = null;
+    // Broadcast now so all players see the final bid placed
+    // Then after 2 second pause, advance to trump selection
+    setTimeout(() => {
+      if (!rooms.has(game.roomId)) return;
+      const g = rooms.get(game.roomId);
+      if (g.phase !== 'bidding_pause') return;
+      advanceAfterBiddingPauseForGame(g);
+      broadcastState(g);
+      scheduleTurnTimer(g);
+      scheduleBot(g);
+    }, BIDDING_PAUSE_MS);
+    return;
+  }
+
   if (result && result.trickComplete) {
     clearTurnTimer(game.roomId);
     game.turnDeadlineTs = null;

@@ -35,6 +35,9 @@ test('Judgement: bidding tie goes to Team 1 and Team 1 later seat chooses on par
 
   assert.equal(game.biddingWinnerTeam, 0);
   assert.equal(game.trumpChooserSeat, 2);
+  // Phase is bidding_pause until server advances it
+  assert.equal(game.phase, GAME_PHASES.BIDDING_PAUSE);
+  judgement.advanceAfterBiddingPause(game);
   assert.equal(game.currentSeat, 2);
   assert.equal(game.phase, GAME_PHASES.TRUMP_SELECTION);
 });
@@ -51,6 +54,8 @@ test('Judgement: team 2 partner tie chooses later seat (East)', () => {
 
   assert.equal(game.biddingWinnerTeam, 1);
   assert.equal(game.trumpChooserSeat, 3);
+  assert.equal(game.phase, GAME_PHASES.BIDDING_PAUSE);
+  judgement.advanceAfterBiddingPause(game);
   assert.equal(game.phase, GAME_PHASES.TRUMP_SELECTION);
 });
 
