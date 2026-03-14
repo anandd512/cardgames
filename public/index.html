@@ -29,63 +29,64 @@
 
   <main class="lobby-main">
     <div class="lobby-panel wide">
-      <div class="lobby-columns">
-        <div class="lobby-col-left">
-          <div>
-            <h2 class="panel-title">Choose A Game</h2>
-            <p class="panel-sub">Choose your card battle mode and launch a room.</p>
-          </div>
-          <div class="game-grid" id="gameGrid">
-            <button class="game-tile hidden" data-game="spades">
-              <div class="game-icon">♠</div>
-              <div class="game-title">Spades</div>
-              <div class="game-meta">Classic 4-player spades</div>
-              <div class="game-status live">Live</div>
-            </button>
-            <button class="game-tile selected" data-game="judgement">
-              <div class="game-icon">⚖️</div>
-              <div class="game-title">Judgement</div>
-              <div class="game-meta">Bid &amp; conquer to claim trump</div>
-              <div class="game-status live">Live</div>
-            </button>
-            <button class="game-tile" data-game="dehla">
-              <div class="game-icon">🃏</div>
-              <div class="game-title">Dehla Pakad</div>
-              <div class="game-meta">Hunt the four 10s</div>
-              <div class="game-status live">Live</div>
-            </button>
-          </div>
-          <div class="name-row">
-            <label for="totalRounds">Total Rounds</label>
-            <input id="totalRounds" type="text" value="7" maxlength="2" autocomplete="off" />
-          </div>
-          <div class="rules-toggle-row">
-            <button class="btn btn-ghost" id="btnRulesToggle">Show Rules</button>
-          </div>
-          <div class="rules-panel hidden" id="rulesPanel">
-            <h3 id="rulesTitle">Spades Rule Guide</h3>
-            <ul id="rulesContent"></ul>
-          </div>
-          <div class="name-row">
-            <label for="playerName">Your Name</label>
-            <input id="playerName" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off" />
-          </div>
-          <div class="lobby-actions">
-            <button class="btn btn-primary" id="btnCreate"><span class="btn-icon">✦</span> Create Room</button>
-            <div class="divider"><span>or</span></div>
-            <div class="join-row">
-              <input id="joinCode" type="text" placeholder="Room code" maxlength="6" autocomplete="off" />
-              <button class="btn btn-secondary" id="btnJoin">Join</button>
-            </div>
-            <div class="divider"><span>viewer mode</span></div>
-            <button class="btn btn-ghost" id="btnSimulate"><span class="btn-icon">▶</span> Watch AI Simulation</button>
-          </div>
-          <div id="lobbyError" class="error-msg hidden"></div>
+
+      <!-- Step indicator -->
+      <div class="step-indicator">
+        <div class="step-dot active" id="sdot1"></div>
+        <div class="step-line" id="sline1"></div>
+        <div class="step-dot" id="sdot2"></div>
+        <div class="step-line" id="sline2"></div>
+        <div class="step-dot" id="sdot3"></div>
+      </div>
+      <div class="step-label-row">
+        <span class="step-label active">Game</span>
+        <span class="step-label">Hero</span>
+        <span class="step-label">Play</span>
+      </div>
+
+      <!-- ── Step 1: Pick game ── -->
+      <div class="lobby-step" id="lstep1">
+        <h2 class="panel-title">Choose a Game</h2>
+        <p class="panel-sub">Pick your card battle mode.</p>
+        <div class="game-grid" id="gameGrid">
+          <button class="game-tile hidden" data-game="spades">
+            <div class="game-icon">♠</div>
+            <div class="game-title">Spades</div>
+            <div class="game-meta">Classic 4-player spades</div>
+            <div class="game-status live">Live</div>
+          </button>
+          <button class="game-tile selected" data-game="judgement">
+            <div class="game-icon">⚖️</div>
+            <div class="game-title">Judgement</div>
+            <div class="game-meta">Bid &amp; conquer to claim trump</div>
+            <div class="game-status live">Live</div>
+          </button>
+          <button class="game-tile" data-game="dehla">
+            <div class="game-icon">🃏</div>
+            <div class="game-title">Dehla Pakad</div>
+            <div class="game-meta">Hunt the four 10s</div>
+            <div class="game-status live">Live</div>
+          </button>
         </div>
-        <div class="lobby-col-right">
-          <h2 class="panel-title">Pick Your Avatar</h2>
-          <div class="avatar-picker" id="avatarPicker">
-            <div class="avatar-grid">
+        <div class="name-row" id="roundsRow">
+          <label for="totalRounds">Total Rounds</label>
+          <input id="totalRounds" type="text" value="7" maxlength="2" autocomplete="off" />
+        </div>
+        <div class="step-nav">
+          <button class="btn btn-primary" id="btnStep1Next">Next →</button>
+        </div>
+      </div>
+
+      <!-- ── Step 2: Your hero ── -->
+      <div class="lobby-step hidden" id="lstep2">
+        <h2 class="panel-title">Your Hero</h2>
+        <p class="panel-sub">Enter your name and pick an avatar.</p>
+        <div class="name-row">
+          <label for="playerName">Your Name</label>
+          <input id="playerName" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off" />
+        </div>
+        <div class="avatar-picker" id="avatarPicker">
+          <div class="avatar-grid">
               <button class="avatar-btn selected" data-avatar="ironman" title="Iron Man">
                 <img src="/assets/avatars/Iron%20man.png" alt="Iron Man" draggable="false">
                 <span>Iron Man</span>
@@ -137,7 +138,39 @@
             </div>
           </div>
         </div>
+        <div class="step-nav step-nav-split">
+          <button class="btn btn-ghost" id="btnStep2Back">← Back</button>
+          <button class="btn btn-primary" id="btnStep2Next">Next →</button>
+        </div>
       </div>
+
+      <!-- ── Step 3: Play ── -->
+      <div class="lobby-step hidden" id="lstep3">
+        <h2 class="panel-title">Ready to Play</h2>
+        <p class="panel-sub">Create a room or join a friend's game.</p>
+        <div class="rules-toggle-row">
+          <button class="btn btn-ghost" id="btnRulesToggle">Show Rules</button>
+        </div>
+        <div class="rules-panel hidden" id="rulesPanel">
+          <h3 id="rulesTitle">Spades Rule Guide</h3>
+          <ul id="rulesContent"></ul>
+        </div>
+        <div class="lobby-actions">
+          <button class="btn btn-primary" id="btnCreate"><span class="btn-icon">✦</span> Create Room</button>
+          <div class="divider"><span>or</span></div>
+          <div class="join-row">
+            <input id="joinCode" type="text" placeholder="Room code" maxlength="6" autocomplete="off" />
+            <button class="btn btn-secondary" id="btnJoin">Join</button>
+          </div>
+          <div class="divider"><span>viewer mode</span></div>
+          <button class="btn btn-ghost" id="btnSimulate"><span class="btn-icon">▶</span> Watch AI Simulation</button>
+        </div>
+        <div id="lobbyError" class="error-msg hidden"></div>
+        <div class="step-nav">
+          <button class="btn btn-ghost" id="btnStep3Back">← Back</button>
+        </div>
+      </div>
+
     </div>
   </main>
 </div>
@@ -337,20 +370,31 @@
       <div class="turn-clock m-clock" id="m-clockNorth"><div class="clock-hand"></div><div class="clock-dot"></div></div>
     </div>
 
-    <!-- Middle: West | Felt | East -->
+    <!-- Middle: Felt full-width (W/E overlaid inside) -->
     <div class="m-middle-row">
-      <div class="m-player-side" id="m-zoneWest">
-        <div class="m-avatar-small" id="m-avatarWest">🛡️</div>
-        <span class="m-pname-small" id="m-nameWest">-</span>
-        <span class="m-ptricks-small" id="m-tricksWest">0</span>
-        <span class="m-pbid-small" id="m-bidWest"></span>
-        <div class="turn-clock m-clock-small" id="m-clockWest"><div class="clock-hand"></div><div class="clock-dot"></div></div>
-      </div>
-
       <div class="m-felt" id="m-feltTable">
         <div class="m-opp-hand m-hand-north" id="m-handNorth"></div>
         <div class="m-opp-hand m-hand-west"  id="m-handWest"></div>
         <div class="m-opp-hand m-hand-east"  id="m-handEast"></div>
+
+        <!-- West overlay chip -->
+        <div class="m-player-overlay m-overlay-west" id="m-zoneWest">
+          <div class="m-avatar-small" id="m-avatarWest">🛡️</div>
+          <span class="m-pname-small" id="m-nameWest">-</span>
+          <span class="m-ptricks-small" id="m-tricksWest">0</span>
+          <span class="m-pbid-small" id="m-bidWest"></span>
+          <div class="turn-clock m-clock-small" id="m-clockWest"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+        </div>
+
+        <!-- East overlay chip -->
+        <div class="m-player-overlay m-overlay-east" id="m-zoneEast">
+          <div class="m-avatar-small" id="m-avatarEast">⚡</div>
+          <span class="m-pname-small" id="m-nameEast">-</span>
+          <span class="m-ptricks-small" id="m-tricksEast">0</span>
+          <span class="m-pbid-small" id="m-bidEast"></span>
+          <div class="turn-clock m-clock-small" id="m-clockEast"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+        </div>
+
         <div class="trick-area m-trick-area" id="m-trickArea">
           <div class="trick-slot trick-north" id="m-trickNorth"></div>
           <div class="trick-slot trick-west"  id="m-trickWest"></div>
@@ -358,14 +402,6 @@
           <div class="trick-slot trick-east"  id="m-trickEast"></div>
           <div class="trick-slot trick-south" id="m-trickSouth"></div>
         </div>
-      </div>
-
-      <div class="m-player-side" id="m-zoneEast">
-        <div class="m-avatar-small" id="m-avatarEast">⚡</div>
-        <span class="m-pname-small" id="m-nameEast">-</span>
-        <span class="m-ptricks-small" id="m-tricksEast">0</span>
-        <span class="m-pbid-small" id="m-bidEast"></span>
-        <div class="turn-clock m-clock-small" id="m-clockEast"><div class="clock-hand"></div><div class="clock-dot"></div></div>
       </div>
     </div>
 

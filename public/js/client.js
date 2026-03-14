@@ -436,6 +436,52 @@ function updateLobbyForGameType() {
 
 updateLobbyForGameType();
 
+// ── Lobby step wizard ──────────────────────────────────────────────────────
+let lobbyStep = 1;
+
+function showLobbyStep(n, dir) {
+  const cur = $('lstep' + lobbyStep);
+  if (cur) cur.classList.add('hidden');
+  lobbyStep = n;
+  const next = $('lstep' + n);
+  next.classList.remove('anim-forward', 'anim-back', 'hidden');
+  void next.offsetWidth; // force reflow so animation re-triggers
+  next.classList.add(dir === 'back' ? 'anim-back' : 'anim-forward');
+
+  for (let i = 1; i <= 3; i++) {
+    const dot = $('sdot' + i);
+    dot.classList.remove('active', 'done');
+    if (i < n) dot.classList.add('done');
+    if (i === n) dot.classList.add('active');
+  }
+  for (let i = 1; i <= 2; i++) {
+    $('sline' + i).classList.toggle('done', i < n);
+  }
+  document.querySelectorAll('.step-label').forEach((lbl, idx) => {
+    lbl.classList.remove('active', 'done');
+    if (idx + 1 < n) lbl.classList.add('done');
+    if (idx + 1 === n) lbl.classList.add('active');
+  });
+}
+
+$('btnStep1Next').addEventListener('click', () => showLobbyStep(2));
+
+$('btnStep2Back').addEventListener('click', () => showLobbyStep(1, 'back'));
+$('btnStep2Next').addEventListener('click', () => {
+  const name = $('playerName').value.trim();
+  if (!name) {
+    $('playerName').classList.add('input-error');
+    $('playerName').focus();
+    showToast('Enter your name to continue!', 2500);
+    return;
+  }
+  $('playerName').classList.remove('input-error');
+  showLobbyStep(3);
+});
+
+$('btnStep3Back').addEventListener('click', () => showLobbyStep(2, 'back'));
+// ── end step wizard ────────────────────────────────────────────────────────
+
 $('btnCreate').addEventListener('click', () => {
   unlockAudio();
   const playerName = $('playerName').value.trim();
