@@ -1261,7 +1261,7 @@ function showTrumpModal(state) {
   for (const suit of suits) {
     const btn = document.createElement('button');
     btn.className = `bid-btn trump-btn suit-${suit}`;
-    btn.innerHTML = `${suit[0].toUpperCase() + suit.slice(1)} ${SUIT_SYMBOLS[suit]}`;
+    btn.innerHTML = `${SUIT_SYMBOLS[suit]}`;
     btn.addEventListener('click', () => submitTrump(suit));
     opts.appendChild(btn);
   }
@@ -1394,7 +1394,7 @@ function handleBidTrumpAnnouncement(prev, next) {
       const chooserName = next.trumpChooserSeat !== null && next.trumpChooserSeat !== undefined
         ? safeName(next.players[next.trumpChooserSeat], SEAT_LABELS[next.trumpChooserSeat])
         : 'Unknown';
-      showBidTrumpBannerHTML(`Trump ${trumpIcon} ${trumpName} \u2022 ${cTeamName}: ${cTarget} / ${dTeamName}: ${dTarget}`);
+      showBidTrumpBannerHTML(`Trump ${trumpIcon} ${trumpName}<br>${cTeamName}: ${cTarget}<br>${dTeamName}: ${dTarget}`);
       showToast(`${chooserName} chose trump \u2014 ${trumpName}. ${cTeamName} needs ${cTarget}, ${dTeamName} needs ${dTarget}. ${chooserName} leads first!`, 5000);
       return 2600;
     }

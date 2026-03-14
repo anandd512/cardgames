@@ -196,8 +196,8 @@ input.input-error { border-color: rgba(255, 93, 143, 0.80); box-shadow: 0 0 0 2p
   transform: translateY(-2px);
 }
 .avatar-btn img {
-  width: 78px;
-  height: 78px;
+  width: 68px;
+  height: 68px;
   object-fit: contain;
   display: block;
   pointer-events: none;
@@ -1348,7 +1348,7 @@ body.is-mobile .logo-text       { font-size: 18px; }
 body.is-mobile .logo-suit       { font-size: 22px; }
 body.is-mobile .lobby-main      { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 96vw; }
 body.is-mobile .lobby-panel.wide        { width: 96vw; max-height: none; flex: 1; min-height: 0; overflow-y: auto; }
-body.is-mobile .avatar-grid             { grid-template-columns: repeat(4, 1fr); }
+body.is-mobile .avatar-grid             { grid-template-columns: repeat(3, 1fr); }
 body.is-mobile .game-grid               { gap: 8px; }
 body.is-mobile #gameTable               { display: none !important; }
 body.is-mobile .m-trick-area .center-suit { font-size: 23px; }
@@ -1366,11 +1366,11 @@ body.is-mobile .m-trick-area .trick-card { padding: 4px; }
 body.is-mobile .m-trick-area .trick-card .rank { font-size: 15px; }
 body.is-mobile .m-trick-area .trick-card .suit-mini { font-size: 12px; }
 
-body.is-mobile .avatar-btn img { width: 60px; height: 60px; object-fit: contain; }
+body.is-mobile .avatar-btn img { width: 80px; height: 80px; object-fit: contain; }
 body.is-mobile .avatar-btn { padding: 4px 2px; }
 body.is-mobile .avatar-btn span { display: none; }
 body.is-mobile .game-grid { grid-template-columns: 1fr 1fr; }
-body.is-mobile .avatar-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 4px; }
+body.is-mobile .avatar-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 4px; }
 body.is-mobile .m-hand-area .card:hover,
 body.is-mobile .m-hand-area .card:active { transform: none; z-index: auto; }
 
