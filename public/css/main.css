@@ -802,6 +802,9 @@ input[type="text"] {
 .bid-timer-text { font-size: var(--fs-sm); color: var(--muted); }
 .round-score-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.12); }
 .round-score-row:last-child { border-bottom: 0; }
+.round-score-row.indent { padding-left: 12px; opacity: 0.80; }
+.round-score-row.round-score-divider { padding: 6px 0 3px; border-bottom: none; }
+.round-score-row.round-score-divider span:first-child { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.10em; color: var(--mint); font-weight: 700; }
 
 /* ─── Deal / Shuffle Overlay ─────────────────────────────────────────────── */
 .deal-overlay {

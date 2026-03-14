@@ -1295,16 +1295,40 @@ function renderRoundEnd(state) {
     ? `<div class="round-score-row"><span>Tens Captured</span><span>${team0Name}: ${state.teamTensCaptured ? state.teamTensCaptured[0] : 0} • ${team1Name}: ${state.teamTensCaptured ? state.teamTensCaptured[1] : 0}</span></div>`
     : '';
 
-  // Per-player breakdown for Judgement
+  // Per-player + team breakdown for Judgement
   const playerBreakdown = isJudgement && state.bids
-    ? (state.players || []).map((p, s) => {
-        const name = p ? p.name : SEAT_LABELS[s];
-        const bid = state.bids[s];
-        const tricks = (state.tricks || [])[s] || 0;
-        if (bid === null || bid === undefined) return '';
-        const hit = tricks >= bid ? '\u2713' : '\u2717';
-        return `<div class="round-score-row"><span>${name}</span><span>Bid ${bid} / Took ${tricks} ${hit}</span></div>`;
-      }).filter(Boolean).join('')
+    ? (() => {
+        const bids = state.bids || [];
+        const tricks = state.tricks || [];
+        const team0Tricks = (tricks[0] || 0) + (tricks[2] || 0);
+        const team1Tricks = (tricks[1] || 0) + (tricks[3] || 0);
+        const cTeam = state.contractTeam ?? 0;
+        const dTeam = state.defenderTeam ?? 1;
+        const cTarget = state.contractTarget || '?';
+        const dTarget = state.defenderTarget || '?';
+        const cTricks = cTeam === 0 ? team0Tricks : team1Tricks;
+        const dTricks = dTeam === 0 ? team0Tricks : team1Tricks;
+        const cHit = typeof cTarget === 'number' ? (cTricks >= cTarget ? '\u2713' : '\u2717') : '';
+        const dHit = typeof dTarget === 'number' ? (dTricks >= dTarget ? '\u2713' : '\u2717') : '';
+        const cName = cTeam === 0 ? team0Name : team1Name;
+        const dName = dTeam === 0 ? team0Name : team1Name;
+
+        // Individual bid lines (informational — no ✓/✗ since bid is team-based)
+        const playerLines = (state.players || []).map((p, s) => {
+          const name = safeName(p, SEAT_LABELS[s]);
+          const bid = bids[s];
+          if (bid === null || bid === undefined) return '';
+          return `<div class="round-score-row indent"><span>${name}</span><span>Bid ${bid}</span></div>`;
+        }).filter(Boolean).join('');
+
+        return `
+          <div class="round-score-row round-score-divider"><span>Individual Bids</span><span></span></div>
+          ${playerLines}
+          <div class="round-score-row round-score-divider"><span>Team Results</span><span></span></div>
+          <div class="round-score-row"><span>${cName} (Contract)</span><span>Needed ${cTarget} / Took ${cTricks} ${cHit}</span></div>
+          <div class="round-score-row"><span>${dName} (Defenders)</span><span>Needed ${dTarget} / Took ${dTricks} ${dHit}</span></div>
+        `;
+      })()
     : '';
 
   $('roundScores').innerHTML = `
