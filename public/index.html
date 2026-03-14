@@ -369,31 +369,21 @@
       <div class="turn-clock m-clock" id="m-clockNorth"><div class="clock-hand"></div><div class="clock-dot"></div></div>
     </div>
 
-    <!-- Middle: Felt full-width (W/E overlaid inside) -->
+    <!-- Middle: W side | Felt | E side -->
     <div class="m-middle-row">
+      <!-- West side panel -->
+      <div class="m-side-zone" id="m-zoneWest">
+        <div class="m-avatar-small" id="m-avatarWest">🛡️</div>
+        <span class="m-pname-small" id="m-nameWest">-</span>
+        <span class="m-ptricks-small" id="m-tricksWest">0</span>
+        <span class="m-pbid-small" id="m-bidWest"></span>
+        <div class="turn-clock m-clock-small" id="m-clockWest"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+      </div>
+
       <div class="m-felt" id="m-feltTable">
         <div class="m-opp-hand m-hand-north" id="m-handNorth"></div>
         <div class="m-opp-hand m-hand-west"  id="m-handWest"></div>
         <div class="m-opp-hand m-hand-east"  id="m-handEast"></div>
-
-        <!-- West overlay chip -->
-        <div class="m-player-overlay m-overlay-west" id="m-zoneWest">
-          <div class="m-avatar-small" id="m-avatarWest">🛡️</div>
-          <span class="m-pname-small" id="m-nameWest">-</span>
-          <span class="m-ptricks-small" id="m-tricksWest">0</span>
-          <span class="m-pbid-small" id="m-bidWest"></span>
-          <div class="turn-clock m-clock-small" id="m-clockWest"><div class="clock-hand"></div><div class="clock-dot"></div></div>
-        </div>
-
-        <!-- East overlay chip -->
-        <div class="m-player-overlay m-overlay-east" id="m-zoneEast">
-          <div class="m-avatar-small" id="m-avatarEast">⚡</div>
-          <span class="m-pname-small" id="m-nameEast">-</span>
-          <span class="m-ptricks-small" id="m-tricksEast">0</span>
-          <span class="m-pbid-small" id="m-bidEast"></span>
-          <div class="turn-clock m-clock-small" id="m-clockEast"><div class="clock-hand"></div><div class="clock-dot"></div></div>
-        </div>
-
         <div class="trick-area m-trick-area" id="m-trickArea">
           <div class="trick-slot trick-north" id="m-trickNorth"></div>
           <div class="trick-slot trick-west"  id="m-trickWest"></div>
@@ -401,6 +391,15 @@
           <div class="trick-slot trick-east"  id="m-trickEast"></div>
           <div class="trick-slot trick-south" id="m-trickSouth"></div>
         </div>
+      </div>
+
+      <!-- East side panel -->
+      <div class="m-side-zone" id="m-zoneEast">
+        <div class="m-avatar-small" id="m-avatarEast">⚡</div>
+        <span class="m-pname-small" id="m-nameEast">-</span>
+        <span class="m-ptricks-small" id="m-tricksEast">0</span>
+        <span class="m-pbid-small" id="m-bidEast"></span>
+        <div class="turn-clock m-clock-small" id="m-clockEast"><div class="clock-hand"></div><div class="clock-dot"></div></div>
       </div>
     </div>
 
@@ -425,7 +424,7 @@
 
   <!-- Reactions footer -->
   <div class="m-footer">
-    <button class="m-react-toggle" id="m-reactToggle" title="Reactions">Reactions</button>
+    <button class="m-react-toggle" id="m-reactToggle" title="Reactions">REACT</button>
     <div class="m-reactions-inner" id="m-reactionsInner">
       <button class="reaction-btn" data-reaction="laugh" title="Laugh">😂</button>
       <button class="reaction-btn" data-reaction="cry" title="Cry">😢</button>

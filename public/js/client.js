@@ -565,7 +565,7 @@ const mReactionsInner = document.getElementById('m-reactionsInner');
 if (mReactToggle && mReactionsInner) {
   mReactToggle.addEventListener('click', () => {
     const isOpen = mReactionsInner.classList.toggle('open');
-    mReactToggle.textContent = isOpen ? 'Close' : 'Reactions';
+    mReactToggle.textContent = isOpen ? 'Close' : 'REACT';
     playSfx('click');
   });
 }
@@ -575,6 +575,11 @@ for (const button of document.querySelectorAll('.reaction-btn')) {
     socket.emit('sendReaction', { reaction }, (res) => {
       if (res && res.error) showToast(res.error);
     });
+    playSfx('click');
+    if (mReactionsInner && mReactionsInner.classList.contains('open')) {
+      mReactionsInner.classList.remove('open');
+      if (mReactToggle) mReactToggle.textContent = 'REACT';
+    }
   });
 }
 
@@ -1443,16 +1448,29 @@ function handleBidFlash(prev, next) {
 }
 
 function showBidFloat(seat, label) {
-  const coords = getSeatReactionPosition(seat);
+  const seatCoords = getSeatReactionPosition(seat);
+  const centerEl = $('trickArea');
+  const cr = centerEl ? centerEl.getBoundingClientRect() : null;
+  const tx = cr ? (cr.left + cr.width / 2) - seatCoords.x : 0;
+  const ty = cr ? (cr.top + cr.height / 2) - seatCoords.y : 0;
+
   const layer = document.getElementById('reactionsLayer');
   if (!layer) return;
   const bubble = document.createElement('div');
   bubble.className = 'bid-float';
   bubble.textContent = label;
-  bubble.style.left = `${coords.x}px`;
-  bubble.style.top  = `${coords.y}px`;
+  bubble.style.left = `${seatCoords.x}px`;
+  bubble.style.top  = `${seatCoords.y}px`;
   layer.appendChild(bubble);
-  setTimeout(() => bubble.remove(), 2000);
+
+  bubble.animate([
+    { opacity: 0, transform: 'translate(-50%, -50%) scale(0.5)' },
+    { opacity: 1, transform: `translate(calc(-50% + ${tx * 0.2}px), calc(-50% + ${ty * 0.2}px)) scale(1.2)`, offset: 0.15 },
+    { opacity: 1, transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0.9)`, offset: 0.70 },
+    { opacity: 0, transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0.75)` },
+  ], { duration: 1500, easing: 'cubic-bezier(0.2, 0.65, 0.3, 1)', fill: 'forwards' });
+
+  setTimeout(() => bubble.remove(), 1600);
 }
 
 function flashBid(text) {
@@ -1551,14 +1569,7 @@ function hideError(id) {
 }
 
 let toastTimer = null;
-function showToast(msg, duration = 2400) {
-  const toast = $('toast');
-  toast.textContent = msg;
-  toast.classList.remove('hidden');
-  toast.classList.add('show');
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
-}
+function showToast(msg, duration = 2400) { /* disabled */ }
 
 document.addEventListener('keydown', (e) => {
   if (!$('bidModal').classList.contains('hidden') && pendingBid) {
