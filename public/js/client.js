@@ -6,8 +6,9 @@ let myRoomId = null;
 let mySeat = null;
 let lastState = null;
 let pendingBid = false;
-let selectedGame = 'spades';
+let selectedGame = 'judgement';
 let selectedAvatar = 'ironman';
+let dealAnimating = false;
 
 let audioCtx = null;
 let masterGain = null;
@@ -23,7 +24,7 @@ let roundCountdownTicker = null;
 let roundEndShownAt = null;
 let uiTicker = null;
 let musicMuted = false;
-let musicVolumePct = 65;
+let musicVolumePct = 25;
 let musicMode = 'calm';
 
 const RULE_GUIDES = {
@@ -97,6 +98,14 @@ const AVATAR_IMG = {
 const SUIT_SYMBOLS = { spades: '♠', hearts: '♥', diamonds: '♦', clubs: '♣' };
 const SEAT_LABELS = ['South', 'West', 'North', 'East'];
 
+// Returns the visual direction ('South'|'West'|'North'|'East') for an absolute seat.
+// The local player (mySeat) is always shown at the bottom (South position).
+// Spectators keep seat 0 at South.
+function visualDir(seat) {
+  const ref = mySeat !== null ? mySeat : 0;
+  return SEAT_LABELS[(seat - ref + 4) % 4];
+}
+
 const REACTION_LABELS = {
   laugh: '😂',
   cry: '😢',
@@ -106,8 +115,22 @@ const REACTION_LABELS = {
   fire: '🔥',
 };
 
-const $ = (id) => document.getElementById(id);
-const screens = { lobby: $('lobby'), waitingRoom: $('waitingRoom'), gameTable: $('gameTable') };
+const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0) && window.innerWidth <= 768;
+if (isMobile) document.body.classList.add('is-mobile');
+
+const $ = (id) => {
+  if (isMobile) {
+    const el = document.getElementById(`m-${id}`);
+    if (el) return el;
+  }
+  return document.getElementById(id);
+};
+const screens = {
+  lobby: document.getElementById('lobby'),
+  waitingRoom: document.getElementById('waitingRoom'),
+  gameTable: document.getElementById('gameTable'),
+  mobileGame: document.getElementById('mobileGame'),
+};
 
 function safeName(player, fallback) {
   if (!player || !player.name) return fallback;
@@ -260,6 +283,41 @@ function applyMusicSettings() {
     const base = musicMuted ? 0 : musicVolumePct / 100;
     masterGain.gain.value = 0.1 + base * 0.45;
   }
+  // Sync mute button icon
+  const btn = $('btnMusicMute');
+  if (btn) {
+    btn.textContent = musicMuted ? '🔇' : '🎵';
+    btn.classList.toggle('muted', musicMuted);
+  }
+}
+
+function triggerDealAnimation() {
+  const overlay = $('dealOverlay');
+  if (!overlay || dealAnimating) return;
+  dealAnimating = true;
+  overlay.classList.remove('hidden', 'shuffling', 'dealing', 'done');
+  const label = $('dealLabel');
+  if (label) label.textContent = 'Shuffling...';
+  // Restart card animations by cloning the deck
+  const deck = $('dealDeck');
+  if (deck) {
+    const fresh = deck.cloneNode(true);
+    deck.replaceWith(fresh);
+  }
+  overlay.classList.add('shuffling');
+  setTimeout(() => {
+    if (label) label.textContent = 'Dealing cards...';
+    overlay.classList.remove('shuffling');
+    overlay.classList.add('dealing');
+    setTimeout(() => {
+      overlay.classList.add('done');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('dealing', 'done');
+        dealAnimating = false;
+      }, 380);
+    }, 950);
+  }, 900);
 }
 
 function handleStateSfx(prev, next) {
@@ -268,9 +326,11 @@ function handleStateSfx(prev, next) {
   if ((prev.phase === 'waiting' && next.phase === 'bidding') ||
       (prev.phase === 'waiting' && next.phase === 'playing')) {
     playSfx('start');
+    triggerDealAnimation();
   }
   if (prev.roundNumber !== next.roundNumber) {
     playSfx('roundStart');
+    triggerDealAnimation();
   }
   if (prev.phase !== 'round_end' && next.phase === 'round_end') {
     playSfx('roundOver');
@@ -293,8 +353,11 @@ function handleStateSfx(prev, next) {
 }
 
 function showScreen(name) {
-  Object.entries(screens).forEach(([key, el]) => el.classList.toggle('active', key === name));
-  if (name === 'gameTable') {
+  const effectiveName = (name === 'gameTable' && isMobile) ? 'mobileGame' : name;
+  Object.entries(screens).forEach(([key, el]) => {
+    if (el) el.classList.toggle('active', key === effectiveName);
+  });
+  if (name === 'gameTable' && !isMobile) {
     tryLockLandscape();
   }
 }
@@ -451,7 +514,7 @@ $('btnMusicMute') && $('btnMusicMute').addEventListener('click', () => {
   unlockAudio();
   musicMuted = !musicMuted;
   applyMusicSettings();
-  localStorage.setItem('cg_music_muted', musicMuted ? '1' : '0');
+  // Don't persist muted state — it resets each session
 });
 
 $('musicVolume') && $('musicVolume').addEventListener('input', (e) => {
@@ -468,15 +531,16 @@ $('musicMode') && $('musicMode').addEventListener('change', (e) => {
 });
 
 function loadMusicPrefs() {
-  const m = localStorage.getItem('cg_music_muted');
-  const v = Number(localStorage.getItem('cg_music_volume') || 65);
+  const v = Number(localStorage.getItem('cg_music_volume') || 25);
   const mode = localStorage.getItem('cg_music_mode') || 'calm';
-  musicMuted = m === '1';
-  musicVolumePct = Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 65;
+  // Never restore muted state — always start unmuted each session.
+  musicMuted = false;
+  musicVolumePct = Number.isFinite(v) && v > 0 ? Math.min(100, Math.max(0, v)) : 25;
   musicMode = ['calm', 'lounge', 'cinematic'].includes(mode) ? mode : 'calm';
 }
 
 loadMusicPrefs();
+applyMusicSettings();
 
 socket.on('gameState', (state) => {
   selectedGame = state.gameType || selectedGame;
@@ -489,7 +553,9 @@ socket.on('gameState', (state) => {
     renderWaitingRoom(state);
     if (state.phase !== 'waiting') showScreen('gameTable');
   }
-  if (screens.gameTable.classList.contains('active')) {
+  const isGameVisible = (screens.gameTable && screens.gameTable.classList.contains('active'))
+    || (screens.mobileGame && screens.mobileGame.classList.contains('active'));
+  if (isGameVisible) {
     renderTable(state);
   }
 });
@@ -542,6 +608,12 @@ function renderTable(state) {
 
   if (state.phase === 'bidding' && mySeat !== null && state.currentSeat === mySeat && !pendingBid) {
     showBidModal();
+  }
+
+  // Auto-close bid modal if it's no longer local player's turn
+  if (pendingBid && (state.phase !== 'bidding' || state.currentSeat !== mySeat)) {
+    pendingBid = false;
+    hideModal('bidModal');
   }
 
   if (state.phase === 'trump_selection' && mySeat !== null && state.currentSeat === mySeat) {
@@ -703,7 +775,8 @@ function renderScoreHUD(state) {
     spadesBadge.classList.remove('hidden');
   } else if (isDehla) {
     if (state.trumpSuit) {
-      spadesBadge.innerHTML = `${formatSuitHTML(state.trumpSuit)} set`;
+      const dn = state.trumpSuit.charAt(0).toUpperCase() + state.trumpSuit.slice(1);
+      spadesBadge.innerHTML = `${formatSuitHTML(state.trumpSuit)} ${dn} (set)`;
     } else {
       spadesBadge.textContent = 'Hidden';
     }
@@ -715,7 +788,8 @@ function renderScoreHUD(state) {
 
   const trumpBadge = $('trumpSuitBadge');
   if ((isJudgement || isDehla) && state.trumpSuit) {
-    trumpBadge.innerHTML = formatSuitHTML(state.trumpSuit);
+    const tn = state.trumpSuit.charAt(0).toUpperCase() + state.trumpSuit.slice(1);
+    trumpBadge.innerHTML = `${formatSuitHTML(state.trumpSuit)} ${tn}`;
     trumpBadge.classList.remove('hidden');
   } else {
     trumpBadge.classList.add('hidden');
@@ -788,13 +862,11 @@ function renderScorecard(state) {
 }
 
 function renderPlayerInfos(state) {
-  const dirs = ['South', 'West', 'North', 'East'];
-  const avatarIds = ['avatarSouth', 'avatarWest', 'avatarNorth', 'avatarEast'];
   for (let s = 0; s < 4; s++) {
-    const dir = dirs[s];
+    const dir = visualDir(s);
     const p = state.players[s];
     $(`name${dir}`).textContent = p ? p.name : '-';
-    const avatarEl = $(avatarIds[s]);
+    const avatarEl = $(`avatar${dir}`);
     if (avatarEl) {
       const avatarKey = p && p.avatar ? p.avatar : 'ironman';
       const imgSrc = AVATAR_IMG[avatarKey];
@@ -817,25 +889,24 @@ function renderPlayerInfos(state) {
 }
 
 function renderTurnClocks(state) {
-  const ids = ['South', 'West', 'North', 'East'];
   const limitMs = state.turnDurationMs || 15000;
   const deadline = state.turnDeadlineTs || (Date.now() + limitMs);
   const remainMs = Math.max(0, deadline - Date.now());
   const progress = Math.max(0, Math.min(1, remainMs / limitMs));
   const angle = (1 - progress) * 360;
 
-  for (let i = 0; i < ids.length; i++) {
-    const el = $(`clock${ids[i]}`);
+  for (let s = 0; s < 4; s++) {
+    const el = $(`clock${visualDir(s)}`);
     if (!el) continue;
     if (state.phase === 'bidding' || state.phase === 'playing' || state.phase === 'trump_selection') {
-      if (state.currentSeat === i) {
+      if (state.currentSeat === s) {
         el.style.setProperty('--progress', String(progress));
         el.style.setProperty('--hand-angle', `${angle}deg`);
       } else {
         el.style.setProperty('--progress', '1');
         el.style.setProperty('--hand-angle', '0deg');
       }
-      el.classList.toggle('active', state.currentSeat === i);
+      el.classList.toggle('active', state.currentSeat === s);
     } else {
       el.style.setProperty('--progress', '1');
       el.style.setProperty('--hand-angle', '0deg');
@@ -845,26 +916,13 @@ function renderTurnClocks(state) {
 }
 
 function renderOpponentHands(state) {
-  const seats = [
-    { seat: 2, el: $('handNorth') },
-    { seat: 1, el: $('handWest') },
-    { seat: 3, el: $('handEast') },
-  ];
-  for (const { seat, el } of seats) {
+  // Visual positions 1=West, 2=North, 3=East always show card backs.
+  // The absolute seat at each visual position rotates with mySeat.
+  for (let visualPos = 1; visualPos <= 3; visualPos++) {
+    const seat = mySeat !== null ? (mySeat + visualPos) % 4 : visualPos;
+    const dir = SEAT_LABELS[visualPos]; // 'West', 'North', 'East'
+    const el = $(`hand${dir}`);
     el.innerHTML = '';
-    const visibleCards = state.hands[seat] || [];
-    const hasFaceCards = visibleCards.some(c => !c.hidden);
-
-    if (hasFaceCards) {
-      for (const card of visibleCards) {
-        if (card.hidden) continue;
-        const c = buildCardElement(card, false, true);
-        c.classList.add('trick-card');
-        el.appendChild(c);
-      }
-      continue;
-    }
-
     const count = state.handCounts[seat] || 0;
     for (let i = 0; i < count; i++) {
       const back = document.createElement('div');
@@ -875,12 +933,11 @@ function renderOpponentHands(state) {
 }
 
 function renderTrickArea(state) {
-  const slots = {
-    0: $('trickSouth'),
-    1: $('trickWest'),
-    2: $('trickNorth'),
-    3: $('trickEast'),
-  };
+  // Build slot map: absolute seat → visual trick slot element
+  const slots = {};
+  for (let s = 0; s < 4; s++) {
+    slots[s] = $(`trick${visualDir(s)}`);
+  }
   Object.values(slots).forEach(el => el.innerHTML = '');
 
   for (const item of state.currentTrick) {
@@ -895,10 +952,7 @@ function applyTrickFlyAnimation(state) {
   const trickArea = $('trickArea');
   trickArea.classList.remove('fly-south', 'fly-west', 'fly-north', 'fly-east');
   if (state.phase !== 'trick_pause' || state.lastTrickWinner === null || state.lastTrickWinner === undefined) return;
-  if (state.lastTrickWinner === 0) trickArea.classList.add('fly-south');
-  if (state.lastTrickWinner === 1) trickArea.classList.add('fly-west');
-  if (state.lastTrickWinner === 2) trickArea.classList.add('fly-north');
-  if (state.lastTrickWinner === 3) trickArea.classList.add('fly-east');
+  trickArea.classList.add(`fly-${visualDir(state.lastTrickWinner).toLowerCase()}`);
 }
 
 function renderMyHand(state) {
@@ -913,11 +967,18 @@ function renderMyHand(state) {
   for (const card of hand) {
     if (card.hidden) continue;
     const id = `${card.rank}_${card.suit}`;
-    const isLegal = isMyTurn && legal.has(id);
+    
+    // We want the cards to be bright and visible during bidding.
+    // They should only be dimmed (marked illegal) if it's the playing phase.
+    // To strictly follow user request without altering non-turn playing phase UX too much
+    // (or maybe making it better overall):
+    const isPlayable = isMyTurn && legal.has(id);
+    const isVisuallyLegal = isPlayable || state.phase !== 'playing';
+
     const disabled = mySeat === null || !isMyTurn;
-    const c = buildCardElement(card, isLegal, disabled);
+    const c = buildCardElement(card, isVisuallyLegal, disabled);
     c.dataset.id = id;
-    if (isLegal) c.addEventListener('click', () => onCardClick(card));
+    if (isPlayable) c.addEventListener('click', () => onCardClick(card));
     handEl.appendChild(c);
   }
 }
@@ -1104,15 +1165,34 @@ function handleBidTrumpAnnouncement(prev, next) {
   if (!prev) return;
 
   if (next.gameType === 'judgement') {
-    const movedIntoPlay = prev.phase === 'trump_selection' && next.phase === 'playing';
-    if (!movedIntoPlay) return;
-    const winnerSeat = next.lastBidWinnerSeat;
-    const winnerName = winnerSeat !== null && winnerSeat !== undefined
-      ? safeName(next.players[winnerSeat], SEAT_LABELS[winnerSeat])
-      : 'Unknown';
-    const trumpIcon = formatSuitHTML(next.trumpSuit);
-    showBidTrumpBannerHTML(`${winnerName} won bid • Trump ${trumpIcon}`);
-    return;
+    // Bidding complete → trump selection: show bid winner + team totals immediately
+    if (prev.phase === 'bidding' && next.phase === 'trump_selection') {
+      const winnerSeat = next.lastBidWinnerSeat;
+      const winnerName = winnerSeat !== null && winnerSeat !== undefined
+        ? safeName(next.players[winnerSeat], SEAT_LABELS[winnerSeat])
+        : 'Unknown';
+      const [team0Name, team1Name] = getTeamDisplayNames(next);
+      const bids = next.bids || [null, null, null, null];
+      const ns = (bids[0] || 0) + (bids[2] || 0);
+      const ew = (bids[1] || 0) + (bids[3] || 0);
+      showBidTrumpBannerHTML(`🏆 ${winnerName} won the bid!`);
+      showToast(`🏆 ${winnerName} won the bid! — ${team0Name}: ${ns} | ${team1Name}: ${ew} — choosing trump…`, 5000);
+      return;
+    }
+
+    // Trump chosen → playing: show only trump suit toast
+    if (prev.phase === 'trump_selection' && next.phase === 'playing') {
+      const trumpName = next.trumpSuit ? next.trumpSuit.charAt(0).toUpperCase() + next.trumpSuit.slice(1) : '?';
+      const trumpIcon = formatSuitHTML(next.trumpSuit);
+      const [team0Name, team1Name] = getTeamDisplayNames(next);
+      const cTeamName = next.contractTeam === 0 ? team0Name : team1Name;
+      const dTeamName = next.defenderTeam === 0 ? team0Name : team1Name;
+      const cTarget = next.contractTarget || '?';
+      const dTarget = next.defenderTarget || '?';
+      showBidTrumpBannerHTML(`Trump ${trumpIcon} ${trumpName} • ${cTeamName}: ${cTarget} / ${dTeamName}: ${dTarget}`);
+      showToast(`Trump is ${trumpName}! ${cTeamName} needs ${cTarget} tricks, ${dTeamName} needs ${dTarget}`, 4000);
+      return;
+    }
   }
 
   if (next.gameType === 'dehla') {
@@ -1152,11 +1232,25 @@ function handleBidFlash(prev, next) {
     if ((before === null || before === undefined) && (after !== null && after !== undefined)) {
       const player = next.players[seat];
       const name = player ? player.name : SEAT_LABELS[seat];
-      const text = `${name} bid ${after === 0 ? 'NIL' : after}`;
-      flashBid(text);
+      const bidLabel = after === 0 ? 'NIL' : String(after);
+      flashBid(`${name}'s bid is ${bidLabel}`);
+      showBidFloat(seat, bidLabel);
       break;
     }
   }
+}
+
+function showBidFloat(seat, label) {
+  const coords = getSeatReactionPosition(seat);
+  const layer = document.getElementById('reactionsLayer');
+  if (!layer) return;
+  const bubble = document.createElement('div');
+  bubble.className = 'bid-float';
+  bubble.textContent = label;
+  bubble.style.left = `${coords.x}px`;
+  bubble.style.top  = `${coords.y}px`;
+  layer.appendChild(bubble);
+  setTimeout(() => bubble.remove(), 2000);
 }
 
 function flashBid(text) {
@@ -1206,13 +1300,8 @@ function renderReaction({ reaction, seat, name }) {
 }
 
 function getSeatReactionPosition(seat) {
-  const map = {
-    0: $('zoneSouth'),
-    1: $('zoneWest'),
-    2: $('zoneNorth'),
-    3: $('zoneEast'),
-  };
-  const target = seat === null || seat === undefined ? $('feltTable') : map[seat];
+  const dir = (seat === null || seat === undefined) ? null : visualDir(seat);
+  const target = dir ? $(`zone${dir}`) : $('feltTable');
   const rect = target.getBoundingClientRect();
   return {
     x: rect.left + rect.width / 2,
@@ -1280,5 +1369,16 @@ if (!uiTicker) {
     if (!lastState) return;
     if (!screens.gameTable.classList.contains('active')) return;
     renderTurnClocks(lastState);
+    // Update bid modal countdown
+    if (pendingBid && !$('bidModal').classList.contains('hidden')) {
+      const limit = lastState.turnDurationMs || 60000;
+      const deadline = lastState.turnDeadlineTs || (Date.now() + limit);
+      const remain = Math.max(0, deadline - Date.now());
+      const pct = (remain / limit) * 100;
+      const fill = $('bidTimerFill');
+      const txt  = $('bidTimerText');
+      if (fill) fill.style.width = `${pct}%`;
+      if (txt)  txt.textContent = `${Math.ceil(remain / 1000)}s`;
+    }
   }, 250);
 }

@@ -6,7 +6,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>CardGames Platform</title>
+  <title>CardArena</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/main.css" />
@@ -18,8 +18,7 @@
   <header class="lobby-header">
     <div class="logo">
       <span class="logo-suit">♠</span>
-      <span class="logo-text">CardGames</span>
-      <span class="logo-sub">Play. Spectate. React.</span>
+      <span class="logo-text">CardArena</span>
     </div>
   </header>
 
@@ -32,11 +31,11 @@
             <p class="panel-sub">Choose your card battle mode and launch a room.</p>
           </div>
           <div class="game-grid" id="gameGrid">
-            <button class="game-tile selected" data-game="spades">
+            <button class="game-tile hidden" data-game="spades">
               <div class="game-title">Spades</div>
               <div class="game-status live">Live</div>
             </button>
-            <button class="game-tile" data-game="judgement">
+            <button class="game-tile selected" data-game="judgement">
               <div class="game-title">Judgement</div>
               <div class="game-status live">Live</div>
             </button>
@@ -46,7 +45,7 @@
             </button>
           </div>
           <div class="name-row">
-            <label for="totalRounds">Total Rounds (Judgement / Dehla)</label>
+            <label for="totalRounds">Total Rounds</label>
             <input id="totalRounds" type="text" value="7" maxlength="2" autocomplete="off" />
           </div>
           <div class="rules-toggle-row">
@@ -73,7 +72,7 @@
           <div id="lobbyError" class="error-msg hidden"></div>
         </div>
         <div class="lobby-col-right">
-          <h2 class="panel-title">Pick Your Avenger</h2>
+          <h2 class="panel-title">Pick Your Avatar</h2>
           <div class="avatar-picker" id="avatarPicker">
             <div class="avatar-grid">
               <button class="avatar-btn selected" data-avatar="ironman" title="Iron Man">
@@ -222,9 +221,24 @@
     </div>
     <div class="hand-area" id="handSouth"></div>
     <div class="turn-indicator" id="turnIndicator"></div>
+    <button class="game-mute-btn" id="btnMusicMute" title="Toggle music">🎵</button>
     <div class="bid-flash hidden" id="bidFlash"></div>
     <div class="bid-trump-banner hidden" id="bidTrumpBanner"></div>
     <div class="round-winner-banner hidden" id="roundWinnerBanner"></div>
+    <!-- Deal / shuffle animation overlay -->
+    <div class="deal-overlay hidden" id="dealOverlay">
+      <div class="deal-deck" id="dealDeck">
+        <div class="dc"></div><div class="dc"></div><div class="dc"></div>
+        <div class="dc"></div><div class="dc"></div><div class="dc"></div>
+        <div class="dc"></div><div class="dc"></div><div class="dc"></div>
+        <div class="dc"></div>
+      </div>
+      <div class="deal-pile dp-n"></div>
+      <div class="deal-pile dp-w"></div>
+      <div class="deal-pile dp-e"></div>
+      <div class="deal-pile dp-s"></div>
+      <div class="deal-label" id="dealLabel">Shuffling...</div>
+    </div>
   </div>
 
   <!-- ── Right: all panels ───────────────────────────────────── -->
@@ -268,11 +282,134 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════════════ MOBILE GAME SCREEN -->
+<div id="mobileGame" class="screen">
+  <!-- Compact score header -->
+  <div class="m-header">
+    <div class="m-team-info">
+      <span class="m-team-label" id="m-teamLabelNS">NS</span>
+      <span class="m-score" id="m-scoreNS">0</span>
+      <span class="m-bags" id="m-bagsNS"></span>
+    </div>
+    <div class="m-center-info">
+      <span class="m-round-badge" id="m-roundBadge">#1</span>
+      <span id="m-trumpSuitBadge"></span>
+    </div>
+    <div class="m-team-info m-team-ew">
+      <span class="m-bags" id="m-bagsEW"></span>
+      <span class="m-score" id="m-scoreEW">0</span>
+      <span class="m-team-label" id="m-teamLabelEW">EW</span>
+    </div>
+    <button class="m-mute-btn" id="m-btnMusicMute" title="Toggle music">🎵</button>
+  </div>
+
+  <!-- Contract / status strip -->
+  <div class="m-status-bar">
+    <span class="m-status-label" id="m-specialRuleLabel">Trump</span>
+    <span id="m-spadesBrokenBadge" class="badge hidden"></span>
+    <span id="m-contractBadge" class="badge hidden"></span>
+  </div>
+
+  <!-- Main play area -->
+  <div class="m-game-area">
+    <!-- North player zone -->
+    <div class="m-player-zone" id="m-zoneNorth">
+      <div class="m-avatar-wrap" id="m-avatarNorth">🦴</div>
+      <div class="m-player-info-col">
+        <span class="m-pname" id="m-nameNorth">-</span>
+        <span class="m-ptricks" id="m-tricksNorth">0 tricks</span>
+        <span class="m-pbid" id="m-bidNorth"></span>
+      </div>
+      <div class="turn-clock m-clock" id="m-clockNorth"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+    </div>
+
+    <!-- Middle: West | Felt | East -->
+    <div class="m-middle-row">
+      <div class="m-player-side" id="m-zoneWest">
+        <div class="m-avatar-small" id="m-avatarWest">🛡️</div>
+        <span class="m-pname-small" id="m-nameWest">-</span>
+        <span class="m-ptricks-small" id="m-tricksWest">0</span>
+        <span class="m-pbid-small" id="m-bidWest"></span>
+        <div class="turn-clock m-clock-small" id="m-clockWest"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+      </div>
+
+      <div class="m-felt" id="m-feltTable">
+        <div class="m-opp-hand m-hand-north" id="m-handNorth"></div>
+        <div class="m-opp-hand m-hand-west"  id="m-handWest"></div>
+        <div class="m-opp-hand m-hand-east"  id="m-handEast"></div>
+        <div class="trick-area m-trick-area" id="m-trickArea">
+          <div class="trick-slot trick-north" id="m-trickNorth"></div>
+          <div class="trick-slot trick-west"  id="m-trickWest"></div>
+          <div class="trick-slot trick-center" id="m-trickCenter"><span class="center-suit">♠</span></div>
+          <div class="trick-slot trick-east"  id="m-trickEast"></div>
+          <div class="trick-slot trick-south" id="m-trickSouth"></div>
+        </div>
+      </div>
+
+      <div class="m-player-side" id="m-zoneEast">
+        <div class="m-avatar-small" id="m-avatarEast">⚡</div>
+        <span class="m-pname-small" id="m-nameEast">-</span>
+        <span class="m-ptricks-small" id="m-tricksEast">0</span>
+        <span class="m-pbid-small" id="m-bidEast"></span>
+        <div class="turn-clock m-clock-small" id="m-clockEast"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+      </div>
+    </div>
+
+    <!-- South (you) player zone -->
+    <div class="m-player-zone" id="m-zoneSouth">
+      <div class="m-avatar-wrap" id="m-avatarSouth">💚</div>
+      <div class="m-player-info-col">
+        <span class="m-pname" id="m-nameSouth">-</span>
+        <span class="m-ptricks" id="m-tricksSouth">0 tricks</span>
+        <span class="m-pbid" id="m-bidSouth"></span>
+      </div>
+      <div class="turn-clock m-clock" id="m-clockSouth"><div class="clock-hand"></div><div class="clock-dot"></div></div>
+      <span class="your-turn-badge hidden" id="m-yourTurnBadge">YOUR TURN</span>
+    </div>
+  </div>
+
+  <!-- Your hand -->
+  <div class="m-hand-area" id="m-handSouth"></div>
+
+  <!-- Turn indicator -->
+  <div class="m-turn-bar" id="m-turnIndicator"></div>
+
+  <!-- Reactions footer -->
+  <div class="m-footer">
+    <button class="reaction-btn" data-reaction="laugh" title="Laugh">😂</button>
+    <button class="reaction-btn" data-reaction="cry" title="Cry">😢</button>
+    <button class="reaction-btn" data-reaction="well_played" title="Well Played">👏</button>
+    <button class="reaction-btn" data-reaction="angry" title="Angry">😠</button>
+    <button class="reaction-btn" data-reaction="fire" title="Fire">🔥</button>
+  </div>
+
+  <!-- Banners & overlays -->
+  <div class="bid-flash hidden" id="m-bidFlash"></div>
+  <div class="bid-trump-banner hidden" id="m-bidTrumpBanner"></div>
+  <div class="round-winner-banner hidden" id="m-roundWinnerBanner"></div>
+  <div class="deal-overlay hidden" id="m-dealOverlay">
+    <div class="deal-deck" id="m-dealDeck">
+      <div class="dc"></div><div class="dc"></div><div class="dc"></div>
+      <div class="dc"></div><div class="dc"></div><div class="dc"></div>
+      <div class="dc"></div><div class="dc"></div><div class="dc"></div>
+      <div class="dc"></div>
+    </div>
+    <div class="deal-pile dp-n"></div>
+    <div class="deal-pile dp-w"></div>
+    <div class="deal-pile dp-e"></div>
+    <div class="deal-pile dp-s"></div>
+    <div class="deal-label" id="m-dealLabel">Shuffling...</div>
+  </div>
+</div>
+<!-- end #mobileGame -->
+
 <div id="bidModal" class="modal hidden">
   <div class="modal-backdrop"></div>
   <div class="modal-box">
     <h3>Place Your Bid</h3>
     <p class="bid-tip" id="bidTip">How many tricks will you take?</p>
+    <div class="bid-timer-bar"><div class="bid-timer-fill" id="bidTimerFill"></div></div>
+    <div class="bid-timer-row"><span id="bidTimerText" class="bid-timer-text">60s</span></div>
     <div class="bid-options" id="bidOptions"></div>
     <p class="nil-note" id="bidNote">Bid <strong>0</strong> for <em>Nil</em>.</p>
   </div>

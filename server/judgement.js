@@ -307,7 +307,11 @@ function _pickTrumpChooserSeat(game, winningTeam) {
   if (game.bids[a] > game.bids[b]) return a;
   if (game.bids[b] > game.bids[a]) return b;
 
-  return Math.max(a, b);
+  const startSeat = (game.dealerSeat + 1) % 4;
+  const da = (a - startSeat + 4) % 4;
+  const db = (b - startSeat + 4) % 4;
+
+  return da > db ? a : b;
 }
 
 function _beats(challenger, current, ledSuit, trumpSuit) {

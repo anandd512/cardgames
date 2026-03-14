@@ -36,7 +36,7 @@ const BOT_PLAY_MS_MAX = 2500;
 const TRICK_PAUSE_MS = 1800;
 const ROUND_PAUSE_MS = 5000;
 const TURN_TIMEOUT_MS = 15000;
-const JUDGEMENT_TURN_TIMEOUT_MS = 30000;
+const BIDDING_TURN_TIMEOUT_MS = 60000;
 
 const ALLOWED_REACTIONS = new Set(['laugh', 'cry', 'well_played', 'angry', 'waiting', 'fire']);
 const ALLOWED_AVATARS = {
@@ -110,7 +110,10 @@ function getPublicStateForGame(game, seat) {
 }
 
 function getTurnTimeoutMs(game) {
-  return game && game.gameType === 'judgement' ? JUDGEMENT_TURN_TIMEOUT_MS : TURN_TIMEOUT_MS;
+  if (!game) return TURN_TIMEOUT_MS;
+  const phases = getPhases(game);
+  if (game.phase === phases.BIDDING || game.phase === phases.TRUMP_SELECTION) return BIDDING_TURN_TIMEOUT_MS;
+  return TURN_TIMEOUT_MS;
 }
 
 function isActionPhase(game) {

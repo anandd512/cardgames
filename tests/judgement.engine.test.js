@@ -24,6 +24,7 @@ function playOneTrick(game, idsInSeatOrder) {
 
 test('Judgement: bidding tie goes to Team 1 and Team 1 later seat chooses on partner tie', () => {
   const game = judgement.createGame('TIE001', { totalRounds: 7 });
+  game.dealerSeat = 3;
   game.phase = GAME_PHASES.BIDDING;
   game.currentSeat = 0;
 
