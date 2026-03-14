@@ -37,15 +37,21 @@
           </div>
           <div class="game-grid" id="gameGrid">
             <button class="game-tile hidden" data-game="spades">
+              <div class="game-icon">♠</div>
               <div class="game-title">Spades</div>
+              <div class="game-meta">Classic 4-player spades</div>
               <div class="game-status live">Live</div>
             </button>
             <button class="game-tile selected" data-game="judgement">
+              <div class="game-icon">⚖️</div>
               <div class="game-title">Judgement</div>
+              <div class="game-meta">Bid &amp; conquer to claim trump</div>
               <div class="game-status live">Live</div>
             </button>
             <button class="game-tile" data-game="dehla">
+              <div class="game-icon">🃏</div>
               <div class="game-title">Dehla Pakad</div>
+              <div class="game-meta">Hunt the four 10s</div>
               <div class="game-status live">Live</div>
             </button>
           </div>
@@ -449,6 +455,7 @@
   <div class="modal-box game-over-box">
     <div class="trophy">🏆</div>
     <h2 id="gameOverTitle">Team Wins!</h2>
+    <p class="game-over-sub" id="gameOverSub"></p>
     <div class="final-scores" id="finalScores"></div>
     <button class="btn btn-primary" id="btnPlayAgain">Play Again</button>
   </div>

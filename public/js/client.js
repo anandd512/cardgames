@@ -1122,8 +1122,7 @@ function renderTurnIndicator(state) {
     return;
   }
   if (state.phase === 'bidding' || state.phase === 'playing' || state.phase === 'trump_selection') {
-    const player = state.players[state.currentSeat];
-    const name = player ? player.name : SEAT_LABELS[state.currentSeat];
+    const name = safeName(state.players[state.currentSeat], SEAT_LABELS[state.currentSeat]);
     const actionText = state.phase === 'bidding'
       ? 'bidding'
       : (state.phase === 'trump_selection' ? 'choosing trump' : 'playing');
@@ -1207,7 +1206,7 @@ function showTrumpModal(state) {
   const suits = ['clubs', 'diamonds', 'hearts', 'spades'];
   for (const suit of suits) {
     const btn = document.createElement('button');
-    btn.className = 'bid-btn';
+    btn.className = `bid-btn trump-btn suit-${suit}`;
     btn.innerHTML = `${suit[0].toUpperCase() + suit.slice(1)} ${SUIT_SYMBOLS[suit]}`;
     btn.addEventListener('click', () => submitTrump(suit));
     opts.appendChild(btn);
@@ -1414,9 +1413,12 @@ function renderGameOver(winningTeam, scores) {
   const isRoundBased = isJudgement || isDehla;
   const [team0Name, team1Name] = getTeamDisplayNames(lastState || { players: [] });
   let title = 'Match Tied';
-  if (winningTeam === 0) title = `${team0Name} Wins!`;
-  if (winningTeam === 1) title = `${team1Name} Wins!`;
+  let sub = 'A hard-fought draw — well played!';
+  if (winningTeam === 0) { title = `${team0Name} Wins!`; sub = `Congratulations, ${team0Name}!`; }
+  if (winningTeam === 1) { title = `${team1Name} Wins!`; sub = `Congratulations, ${team1Name}!`; }
   $('gameOverTitle').textContent = title;
+  const subEl = $('gameOverSub');
+  if (subEl) subEl.textContent = sub;
 
   const unit = isRoundBased ? 'rounds' : 'pts';
   $('finalScores').innerHTML = `
@@ -1424,6 +1426,29 @@ function renderGameOver(winningTeam, scores) {
     <div class="round-score-row"><span>${team1Name}</span><span>${scores[1]} ${unit}</span></div>
   `;
   showModal('gameOverModal');
+  if (winningTeam === 0 || winningTeam === 1) spawnConfetti();
+}
+
+function spawnConfetti() {
+  const colors = ['#ff8a3d', '#ffd166', '#59f4c5', '#ff5d8f', '#c9d6ff', '#fff'];
+  const layer = $('reactionsLayer');
+  if (!layer) return;
+  for (let i = 0; i < 48; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-particle';
+    p.style.cssText = [
+      `left:${Math.random() * 100}vw`,
+      `top:-12px`,
+      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
+      `animation-delay:${(Math.random() * 1.8).toFixed(2)}s`,
+      `animation-duration:${(1.5 + Math.random() * 2).toFixed(2)}s`,
+      `width:${Math.round(6 + Math.random() * 8)}px`,
+      `height:${Math.round(6 + Math.random() * 8)}px`,
+      `transform:rotate(${Math.round(Math.random() * 360)}deg)`,
+    ].join(';');
+    layer.appendChild(p);
+    setTimeout(() => p.remove(), 4200);
+  }
 }
 
 function renderReaction({ reaction, seat, name }) {
