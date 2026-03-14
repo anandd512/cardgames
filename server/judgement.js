@@ -118,18 +118,23 @@ function placeBid(game, seat, bid) {
     const team0Sum = game.bids[0] + game.bids[2];
     const team1Sum = game.bids[1] + game.bids[3];
 
-    game.biddingWinnerTeam = team0Sum >= team1Sum ? 0 : 1;
-    game.trumpChooserSeat = _pickTrumpChooserSeat(game, game.biddingWinnerTeam);
-    game.lastBidWinnerSeat = game.trumpChooserSeat;
-    game.phase = GAME_PHASES.BIDDING_PAUSE;
-    game.currentSeat = game.trumpChooserSeat;
-    return { ok: true, biddingComplete: true };
+    // The team whose player bids first gets the tie-break advantage
+    const firstBidderTeam = TEAM_OF[(game.dealerSeat + 1) % 4];
+    const otherTeam = 1 - firstBidderTeam;
+    const firstTeamSum = firstBidderTeam === 0 ? team0Sum : team1Sum;
+    const otherTeamSum = firstBidderTeam === 0 ? team1Sum : team0Sum;
+    game.biddingWinnerTeam = firstTeamSum >= otherTeamSum ? firstBidderTeam : otherTeam;
 
     _log(game, `Team 1 bid sum: ${team0Sum}. Team 2 bid sum: ${team1Sum}.`);
     if (team0Sum === team1Sum) {
-      _log(game, 'Bid sums tied. Team 1 wins tie advantage.');
+      _log(game, `Bid sums tied. Team ${firstBidderTeam + 1} wins (plays first this round).`);
     }
+    game.trumpChooserSeat = _pickTrumpChooserSeat(game, game.biddingWinnerTeam);
+    game.lastBidWinnerSeat = game.trumpChooserSeat;
     _log(game, `${SEATS[game.trumpChooserSeat]} will choose trump.`);
+    game.phase = GAME_PHASES.BIDDING_PAUSE;
+    game.currentSeat = game.trumpChooserSeat;
+    return { ok: true, biddingComplete: true };
   }
 
   return { ok: true };
