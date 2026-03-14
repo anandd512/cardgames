@@ -68,10 +68,6 @@
             <div class="game-status live">Live</div>
           </button>
         </div>
-        <div class="name-row" id="roundsRow">
-          <label for="totalRounds">Total Rounds</label>
-          <input id="totalRounds" type="text" value="7" maxlength="2" autocomplete="off" />
-        </div>
         <div class="step-nav">
           <button class="btn btn-primary" id="btnStep1Next">Next →</button>
         </div>
@@ -137,7 +133,6 @@
               </button>
             </div>
           </div>
-        </div>
         <div class="step-nav step-nav-split">
           <button class="btn btn-ghost" id="btnStep2Back">← Back</button>
           <button class="btn btn-primary" id="btnStep2Next">Next →</button>
@@ -154,6 +149,10 @@
         <div class="rules-panel hidden" id="rulesPanel">
           <h3 id="rulesTitle">Spades Rule Guide</h3>
           <ul id="rulesContent"></ul>
+        </div>
+        <div class="name-row" id="roundsRow">
+          <label for="totalRounds">Total Rounds</label>
+          <input id="totalRounds" type="text" value="7" maxlength="2" autocomplete="off" />
         </div>
         <div class="lobby-actions">
           <button class="btn btn-primary" id="btnCreate"><span class="btn-icon">✦</span> Create Room</button>
