@@ -52,7 +52,7 @@ const RULE_GUIDES = {
       '<strong>1) Teams:</strong> South + North vs West + East with a 52-card deck.',
       '<strong>2) Match length:</strong> Host chooses 1 to 11 rounds. First team to more than half wins.',
       '<strong>3) Bidding:</strong> Every player bids from <strong>6</strong> to <strong>13</strong>. Timeout auto-bids 6.',
-      '<strong>4) Bid winner team:</strong> Compare team sums (South+North vs West+East). Tie goes to Team 1.',
+      '<strong>4) Bid winner team:</strong> Compare team sums (South+North vs West+East). On a tie, the team whose player bids first in the round wins.',
       '<strong>5) Trump chooser:</strong> Highest individual bidder inside winning team picks trump. Partner tie: later seat chooses.',
       '<strong>6) Trump:</strong> Clubs, Diamonds, Hearts, or Spades. Timeout defaults to Spades.',
       '<strong>7) First lead:</strong> Trump chooser leads trick one; then each trick winner leads next.',
@@ -445,6 +445,7 @@ $('btnCreate').addEventListener('click', () => {
     if (res.error) return showError('lobbyError', res.error);
     myRoomId = res.roomId;
     mySeat = res.seat;
+    persistSession();
     $('displayRoomCode').textContent = res.roomId;
     hideError('lobbyError');
     showScreen('waitingRoom');
@@ -462,6 +463,7 @@ $('btnJoin').addEventListener('click', () => {
     if (res.error) return showError('lobbyError', res.error);
     myRoomId = res.roomId;
     mySeat = res.seat;
+    persistSession();
     $('displayRoomCode').textContent = res.roomId;
     hideError('lobbyError');
     showScreen('waitingRoom');
@@ -481,7 +483,9 @@ $('btnSimulate').addEventListener('click', () => {
 
 $('btnCopyCode').addEventListener('click', () => {
   const code = $('displayRoomCode').textContent;
-  navigator.clipboard.writeText(code).then(() => showToast(`Copied room code: ${code}`));
+  navigator.clipboard.writeText(code)
+    .then(() => showToast(`Copied room code: ${code}`))
+    .catch(() => showToast(`Room code: ${code}`));
 });
 
 $('btnFillBots').addEventListener('click', () => {
@@ -501,6 +505,24 @@ $('btnStartGame').addEventListener('click', () => {
 $('btnPlayAgain').addEventListener('click', () => location.reload());
 $('logToggle') && $('logToggle').addEventListener('click', () => $('logPanel').classList.toggle('open'));
 
+// Leave game / waiting room
+function leaveGame() {
+  if (confirm('Leave the game? Your seat will be handed to AI.')) location.reload();
+}
+document.getElementById('btnLeaveGame')?.addEventListener('click', leaveGame);
+document.getElementById('m-btnLeaveGame')?.addEventListener('click', leaveGame);
+document.getElementById('btnLeaveWaiting')?.addEventListener('click', () => location.reload());
+
+// Mobile reactions toggle
+const mReactToggle = document.getElementById('m-reactToggle');
+const mReactionsInner = document.getElementById('m-reactionsInner');
+if (mReactToggle && mReactionsInner) {
+  mReactToggle.addEventListener('click', () => {
+    const isOpen = mReactionsInner.classList.toggle('open');
+    mReactToggle.textContent = isOpen ? '\ud83d\ude02\u00a0 Close' : '\ud83d\ude02\u00a0 React';
+    playSfx('click');
+  });
+}
 for (const button of document.querySelectorAll('.reaction-btn')) {
   button.addEventListener('click', () => {
     const reaction = button.dataset.reaction;
@@ -556,6 +578,12 @@ socket.on('gameState', (state) => {
   const wasSamePhase = lastState && lastState.phase === state.phase;
   const seatChanged = lastState && lastState.currentSeat !== state.currentSeat;
   const isPlayingOrBidding = state.phase === 'playing' || state.phase === 'bidding';
+
+  // Reset trump option cache on each new round (1.5)
+  if (state.phase === 'bidding') {
+    const opts = $('trumpOptions');
+    if (opts) opts.dataset.ready = '';
+  }
 
   lastState = state;
   updateWaitingRoomTheme(state);
@@ -643,7 +671,6 @@ function renderTable(state) {
   renderOpponentHands(state);
   renderTrickArea(state);
   renderMyHand(state);
-  renderLog(state);
   renderTurnIndicator(state);
   renderTurnClocks(state);
   applyTrickFlyAnimation(state);
@@ -920,7 +947,20 @@ function renderPlayerInfos(state) {
     }
 
     const bid = state.bids ? state.bids[s] : undefined;
-    $(`bid${dir}`).textContent = (state.gameType === 'dehla' || bid === null || bid === undefined) ? '' : `Bid: ${bid === 0 ? 'NIL' : bid}`;
+    const isPlayingPhase = state.phase === 'playing' || state.phase === 'trick_pause';
+    let bidText = '';
+    if (state.gameType === 'dehla' || bid === null || bid === undefined) {
+      bidText = '';
+    } else if (isPlayingPhase && state.contractTarget) {
+      // Show team trick progress instead of raw bid
+      const team = s % 2; // TEAM_OF = [0,1,0,1]
+      const teamTricks = (state.tricks[team] || 0) + (state.tricks[team + 2] || 0);
+      const teamTarget = team === state.contractTeam ? state.contractTarget : state.defenderTarget;
+      bidText = teamTarget ? `${teamTricks}/${teamTarget}` : '';
+    } else {
+      bidText = bid === 0 ? 'NIL' : `Bid: ${bid}`;
+    }
+    $(`bid${dir}`).textContent = bidText;
     $(`tricks${dir}`).textContent = `${state.tricks[s] ?? 0} tricks`;
 
     const zone = $(`zone${dir}`);
@@ -975,6 +1015,17 @@ function renderOpponentHands(state) {
 }
 
 function renderTrickArea(state) {
+  // Skip rebuild if trick + trump are unchanged (DOM diffing)
+  const trickSig = (state.currentTrick || []).map(t => `${t.seat}:${t.card?.rank}_${t.card?.suit}`).join(',');
+  const fullSig = trickSig + '|' + (state.trumpSuit || '');
+  const trickEl = $('trickArea');
+  if (trickEl && trickEl.dataset.sig === fullSig) {
+    // Still update center suit even if trick hasn't changed
+    _updateCenterSuit(state);
+    return;
+  }
+  if (trickEl) trickEl.dataset.sig = fullSig;
+
   // Build slot map: absolute seat → visual trick slot element
   const slots = {};
   for (let s = 0; s < 4; s++) {
@@ -988,6 +1039,16 @@ function renderTrickArea(state) {
     c.classList.add('trick-card');
     slots[item.seat].appendChild(c);
   }
+
+  _updateCenterSuit(state);
+}
+
+function _updateCenterSuit(state) {
+  const sym = state.trumpSuit ? SUIT_SYMBOLS[state.trumpSuit] : '\u2660';
+  [
+    document.querySelector('#trickCenter .center-suit'),
+    document.querySelector('#m-trickCenter .center-suit'),
+  ].forEach(el => { if (el) el.textContent = sym; });
 }
 
 function applyTrickFlyAnimation(state) {
@@ -999,12 +1060,17 @@ function applyTrickFlyAnimation(state) {
 
 function renderMyHand(state) {
   const handEl = $('handSouth');
-  handEl.innerHTML = '';
-
   const seatToShow = mySeat === null ? 0 : mySeat;
   const hand = state.hands[seatToShow] || [];
   const legal = new Set(state.legalCards || []);
   const isMyTurn = state.currentSeat === mySeat && state.phase === 'playing';
+
+  // Skip DOM rebuild when hand composition + legality hasn't changed
+  const sig = hand.filter(c => !c.hidden).map(c => `${c.rank}_${c.suit}`).join(',')
+    + '|' + (isMyTurn ? [...legal].sort().join(',') : state.phase);
+  if (handEl.dataset.sig === sig) return;
+  handEl.dataset.sig = sig;
+  handEl.innerHTML = '';
 
   for (const card of hand) {
     if (card.hidden) continue;
@@ -1021,6 +1087,16 @@ function renderMyHand(state) {
     const c = buildCardElement(card, isVisuallyLegal, disabled);
     c.dataset.id = id;
     if (isPlayable) c.addEventListener('click', () => onCardClick(card));
+    // Explain why a card is greyed out when tapped
+    if (!isPlayable && isMyTurn && state.phase === 'playing') {
+      const ledSuit = state.currentTrick?.length > 0 ? state.currentTrick[0].card.suit : null;
+      c.addEventListener('click', () => {
+        if (ledSuit) {
+          const s = ledSuit.charAt(0).toUpperCase() + ledSuit.slice(1);
+          showToast(`Must follow suit \u2014 play a ${s} card`);
+        }
+      });
+    }
     handEl.appendChild(c);
   }
 }
@@ -1040,6 +1116,11 @@ function renderLog(state) {
 
 function renderTurnIndicator(state) {
   const el = $('turnIndicator');
+  if (state.phase === 'bidding_pause') {
+    el.textContent = 'Tallying bids\u2026';
+    el.classList.add('visible');
+    return;
+  }
   if (state.phase === 'bidding' || state.phase === 'playing' || state.phase === 'trump_selection') {
     const player = state.players[state.currentSeat];
     const name = player ? player.name : SEAT_LABELS[state.currentSeat];
@@ -1169,10 +1250,23 @@ function renderRoundEnd(state) {
     ? `<div class="round-score-row"><span>Tens Captured</span><span>${team0Name}: ${state.teamTensCaptured ? state.teamTensCaptured[0] : 0} • ${team1Name}: ${state.teamTensCaptured ? state.teamTensCaptured[1] : 0}</span></div>`
     : '';
 
+  // Per-player breakdown for Judgement
+  const playerBreakdown = isJudgement && state.bids
+    ? (state.players || []).map((p, s) => {
+        const name = p ? p.name : SEAT_LABELS[s];
+        const bid = state.bids[s];
+        const tricks = (state.tricks || [])[s] || 0;
+        if (bid === null || bid === undefined) return '';
+        const hit = tricks >= bid ? '\u2713' : '\u2717';
+        return `<div class="round-score-row"><span>${name}</span><span>Bid ${bid} / Took ${tricks} ${hit}</span></div>`;
+      }).filter(Boolean).join('')
+    : '';
+
   $('roundScores').innerHTML = `
     <div class="round-score-row"><span>${team0Name}</span><span>${state.teamScore[0]} ${scoreUnit}</span></div>
     <div class="round-score-row"><span>${team1Name}</span><span>${state.teamScore[1]} ${scoreUnit}</span></div>
     <div class="round-score-row"><span>Round Story</span><span>${roundText}</span></div>
+    ${playerBreakdown}
     ${tensLine}
     <div class="round-score-row"><span>Leader Margin</span><span>${comp.leadBy ?? 0} ${leadUnit}</span></div>
     <div class="round-score-row"><span>Next round starts in</span><span id="roundNextCountdown">5s</span></div>
@@ -1231,8 +1325,11 @@ function handleBidTrumpAnnouncement(prev, next) {
       const dTeamName = next.defenderTeam === 0 ? team0Name : team1Name;
       const cTarget = next.contractTarget || '?';
       const dTarget = next.defenderTarget || '?';
-      showBidTrumpBannerHTML(`Trump ${trumpIcon} ${trumpName} • ${cTeamName}: ${cTarget} / ${dTeamName}: ${dTarget}`);
-      showToast(`Trump is ${trumpName}! ${cTeamName} needs ${cTarget} tricks, ${dTeamName} needs ${dTarget}`, 4000);
+      const chooserName = next.trumpChooserSeat !== null && next.trumpChooserSeat !== undefined
+        ? safeName(next.players[next.trumpChooserSeat], SEAT_LABELS[next.trumpChooserSeat])
+        : 'Unknown';
+      showBidTrumpBannerHTML(`Trump ${trumpIcon} ${trumpName} \u2022 ${cTeamName}: ${cTarget} / ${dTeamName}: ${dTarget}`);
+      showToast(`${chooserName} chose trump \u2014 ${trumpName}. ${cTeamName} needs ${cTarget}, ${dTeamName} needs ${dTarget}. ${chooserName} leads first!`, 5000);
       return 2600;
     }
   }
@@ -1406,6 +1503,40 @@ document.addEventListener('click', (e) => {
   const hit = e.target.closest('.btn, .reaction-btn, .bid-btn, .btn-copy, .game-tile, .card');
   if (!hit) return;
   playSfx('click');
+});
+
+// ─── Session persistence for reconnect ────────────────────────────────────────
+function persistSession() {
+  try {
+    sessionStorage.setItem('cg_room', myRoomId || '');
+    sessionStorage.setItem('cg_name', document.getElementById('playerName')?.value.trim() || '');
+  } catch (_) {}
+}
+
+socket.on('disconnect', (reason) => {
+  if (myRoomId) showToast('Connection lost \u2014 reconnecting\u2026', 8000);
+});
+
+socket.on('connect', () => {
+  const savedRoom = sessionStorage.getItem('cg_room');
+  const savedName = sessionStorage.getItem('cg_name');
+  if (!savedRoom || !savedName) return;
+  if (!myRoomId) {
+    // Page was reloaded: attempt to restore a session
+    socket.emit('reconnectRoom', { roomId: savedRoom, playerName: savedName }, (res) => {
+      if (!res || res.error) { sessionStorage.removeItem('cg_room'); return; }
+      myRoomId = res.roomId;
+      mySeat = res.seat;
+      showScreen('gameTable');
+      showToast('Reconnected to game!');
+    });
+  } else {
+    // Mid-session socket drop: re-register with server
+    socket.emit('reconnectRoom', { roomId: myRoomId, playerName: savedName }, (res) => {
+      if (!res || res.error) { showToast('Could not rejoin \u2014 game may have ended'); }
+      else { showToast('Back in the game!'); }
+    });
+  }
 });
 
 if (!uiTicker) {

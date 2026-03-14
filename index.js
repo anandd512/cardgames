@@ -237,9 +237,10 @@ function scheduleTurnTimer(game) {
 function handleActionResult(game, result) {
   if (result && result.biddingComplete) {
     clearTurnTimer(game.roomId);
-    game.turnDeadlineTs = null;
-    // Broadcast now so all players see the final bid placed
-    // Then after 2 second pause, advance to trump selection
+    // Show a live countdown during the pause so the clock drains on clients
+    game.turnDeadlineTs = Date.now() + BIDDING_PAUSE_MS;
+    game.turnDurationMs = BIDDING_PAUSE_MS;
+    broadcastState(game);
     setTimeout(() => {
       if (!rooms.has(game.roomId)) return;
       const g = rooms.get(game.roomId);
@@ -264,6 +265,7 @@ function handleActionResult(game, result) {
       if (advance && advance.roundEnd) {
         clearTurnTimer(gx.roomId);
         if (advance.gameOver) {
+          gx._endedAt = Date.now();
           io.to(gx.roomId).emit('gameOver', {
             winningTeam: advance.winningTeam,
             scores: advance.scores,
@@ -291,6 +293,7 @@ function handleActionResult(game, result) {
     clearTurnTimer(game.roomId);
     game.turnDeadlineTs = null;
     if (result.gameOver) {
+      game._endedAt = Date.now();
       io.to(game.roomId).emit('gameOver', {
         winningTeam: result.winningTeam,
         scores: result.scores,
@@ -559,6 +562,53 @@ io.on('connection', (socket) => {
     cb && cb({ ok: true });
   });
 
+  // ── Reconnect (restore socket after disconnect) ─────────────────────────
+  socket.on('reconnectRoom', ({ roomId, playerName }, cb) => {
+    const id = (roomId || '').toUpperCase();
+    const game = rooms.get(id);
+    if (!game) return cb && cb({ error: 'Room not found' });
+    const phases = getPhases(game);
+    if (game.phase === phases.GAME_OVER) return cb && cb({ error: 'Game already over' });
+
+    const name = sanitize(playerName || '');
+
+    // Case 1: seat is held by a bot placeholder from this player's disconnect
+    let seat = game.players.findIndex(p => p && p._originalName === name);
+
+    // Case 2: player reconnected before bot takeover — slot still human
+    if (seat === -1) {
+      seat = game.players.findIndex(p => p && !p.isBot && p.name === name);
+      if (seat !== -1) {
+        // Just update the socket reference
+        game.players[seat].id = socket.id;
+        clients.set(socket.id, { roomId: id, seat, name: game.players[seat].name, isSpectator: false });
+        socket.join(id);
+        cb && cb({ ok: true, roomId: id, seat });
+        socket.emit('gameState', getPublicStateForGame(game, seat));
+        console.log(`[Room] ${name} re-registered in ${id} as seat ${seat}`);
+        return;
+      }
+      return cb && cb({ error: 'Player not found in room' });
+    }
+
+    // Restore the human from the bot placeholder
+    const placeholder = game.players[seat];
+    const restoredAvatar = placeholder._originalAvatar || 'ironman';
+    game.players[seat] = {
+      id: socket.id,
+      name: placeholder._originalName,
+      avatar: restoredAvatar,
+      avatarEmoji: ALLOWED_AVATARS[restoredAvatar] || '',
+      isBot: false,
+    };
+    clients.set(socket.id, { roomId: id, seat, name: placeholder._originalName, isSpectator: false });
+    socket.join(id);
+    cb && cb({ ok: true, roomId: id, seat });
+    socket.emit('gameState', getPublicStateForGame(game, seat));
+    broadcastState(game);
+    console.log(`[Room] ${name} reconnected to ${id} as seat ${seat}`);
+  });
+
   // ── Disconnect ───────────────────────────────────────────────────────────
   socket.on('disconnect', () => {
     const info = clients.get(socket.id);
@@ -568,6 +618,21 @@ io.on('connection', (socket) => {
       if (game && game.phase === phases.WAITING) {
         game.players[info.seat] = null;
         broadcastState(game);
+      } else if (game && phases && game.phase !== phases.GAME_OVER) {
+        // Replace disconnected seat with a bot so the game can continue
+        const disconnectedPlayer = game.players[info.seat] || {};
+        const avatarId = BOT_AVATARS[info.seat] || 'captain';
+        game.players[info.seat] = {
+          id: `bot_${info.seat}`,
+          name: BOT_NAMES[info.seat],
+          _originalName: disconnectedPlayer.name || info.name,
+          _originalAvatar: disconnectedPlayer.avatar || 'ironman',
+          avatar: avatarId,
+          avatarEmoji: ALLOWED_AVATARS[avatarId],
+          isBot: true,
+        };
+        broadcastState(game);
+        scheduleBot(game);
       }
     }
     if (info && info.roomId) {
@@ -588,6 +653,24 @@ function sanitize(str) {
   if (typeof str !== 'string') return '';
   return str.replace(/[<>"'&]/g, '').slice(0, 20).trim();
 }
+
+// ─── Periodic room cleanup (prevent memory leak) ─────────────────────────────
+setInterval(() => {
+  const now = Date.now();
+  for (const [roomId, game] of rooms) {
+    const hasClients = [...clients.values()].some(c => c.roomId === roomId);
+    if (!hasClients) {
+      rooms.delete(roomId);
+      clearTurnTimer(roomId);
+      continue;
+    }
+    // Remove finished games that have been sitting for 10 minutes
+    if ((game.phase === 'game_over') && game._endedAt && (now - game._endedAt > 10 * 60 * 1000)) {
+      rooms.delete(roomId);
+      clearTurnTimer(roomId);
+    }
+  }
+}, 60 * 1000);
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;

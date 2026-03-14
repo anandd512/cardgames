@@ -10,6 +10,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/main.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♠</text></svg>" />
+  <meta name="description" content="Play Judgement, Dehla Pakad and Spades against friends or AI online." />
+  <meta property="og:title" content="CardArena" />
+  <meta property="og:description" content="Play Judgement, Dehla Pakad and Spades against friends or AI online." />
+  <meta property="og:type" content="website" />
 </head>
 <body>
 
@@ -150,6 +155,7 @@
     <div class="waiting-actions">
       <button class="btn btn-ghost" id="btnFillBots">Fill Empty Seats with AI</button>
       <button class="btn btn-primary" id="btnStartGame" disabled>Start Game</button>
+      <button class="btn btn-ghost" id="btnLeaveWaiting">← Back to Lobby</button>
     </div>
     <div id="waitingError" class="error-msg hidden"></div>
   </div>
@@ -222,6 +228,7 @@
     <div class="hand-area" id="handSouth"></div>
     <div class="turn-indicator" id="turnIndicator"></div>
     <button class="game-mute-btn" id="btnMusicMute" title="Toggle music">🎵</button>
+    <button class="game-leave-btn" id="btnLeaveGame" title="Back to lobby">✕ Leave</button>
     <div class="bid-flash hidden" id="bidFlash"></div>
     <div class="bid-trump-banner hidden" id="bidTrumpBanner"></div>
     <div class="round-winner-banner hidden" id="roundWinnerBanner"></div>
@@ -301,6 +308,7 @@
       <span class="m-team-label" id="m-teamLabelEW">EW</span>
     </div>
     <button class="m-mute-btn" id="m-btnMusicMute" title="Toggle music">🎵</button>
+    <button class="m-mute-btn" id="m-btnLeaveGame" title="Back to lobby">✕</button>
   </div>
 
   <!-- Contract / status strip -->
@@ -376,11 +384,14 @@
 
   <!-- Reactions footer -->
   <div class="m-footer">
-    <button class="reaction-btn" data-reaction="laugh" title="Laugh">😂</button>
-    <button class="reaction-btn" data-reaction="cry" title="Cry">😢</button>
-    <button class="reaction-btn" data-reaction="well_played" title="Well Played">👏</button>
-    <button class="reaction-btn" data-reaction="angry" title="Angry">😠</button>
-    <button class="reaction-btn" data-reaction="fire" title="Fire">🔥</button>
+    <button class="m-react-toggle" id="m-reactToggle" title="Reactions">😂 &nbsp;React</button>
+    <div class="m-reactions-inner" id="m-reactionsInner">
+      <button class="reaction-btn" data-reaction="laugh" title="Laugh">😂</button>
+      <button class="reaction-btn" data-reaction="cry" title="Cry">😢</button>
+      <button class="reaction-btn" data-reaction="well_played" title="Well Played">👏</button>
+      <button class="reaction-btn" data-reaction="angry" title="Angry">😠</button>
+      <button class="reaction-btn" data-reaction="fire" title="Fire">🔥</button>
+    </div>
   </div>
 
   <!-- Banners & overlays -->
