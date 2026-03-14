@@ -565,7 +565,7 @@ const mReactionsInner = document.getElementById('m-reactionsInner');
 if (mReactToggle && mReactionsInner) {
   mReactToggle.addEventListener('click', () => {
     const isOpen = mReactionsInner.classList.toggle('open');
-    mReactToggle.textContent = isOpen ? '\ud83d\ude02\u00a0 Close' : '\ud83d\ude02\u00a0 React';
+    mReactToggle.textContent = isOpen ? 'Close' : 'Reactions';
     playSfx('click');
   });
 }
@@ -867,12 +867,12 @@ function renderScoreHUD(state) {
   $('scoreNS').textContent = state.teamScore[0];
   $('scoreEW').textContent = state.teamScore[1];
   $('bagsNS').textContent = isJudgement
-    ? `round wins: ${state.roundWins ? state.roundWins[0] : state.teamScore[0]}`
+    ? ''
     : (isDehla
       ? `tens: ${state.teamTensCaptured ? state.teamTensCaptured[0] : 0}`
       : `bags: ${state.teamBags[0]}`);
   $('bagsEW').textContent = isJudgement
-    ? `round wins: ${state.roundWins ? state.roundWins[1] : state.teamScore[1]}`
+    ? ''
     : (isDehla
       ? `tens: ${state.teamTensCaptured ? state.teamTensCaptured[1] : 0}`
       : `bags: ${state.teamBags[1]}`);
@@ -1168,11 +1168,14 @@ function renderTurnIndicator(state) {
     return;
   }
   if (state.phase === 'bidding' || state.phase === 'playing' || state.phase === 'trump_selection') {
-    const name = safeName(state.players[state.currentSeat], SEAT_LABELS[state.currentSeat]);
+    const activeSeat = state.phase === 'trump_selection'
+      ? (state.trumpChooserSeat ?? state.currentSeat)
+      : state.currentSeat;
+    const name = safeName(state.players[activeSeat], SEAT_LABELS[activeSeat]);
     const actionText = state.phase === 'bidding'
       ? 'bidding'
       : (state.phase === 'trump_selection' ? 'choosing trump' : 'playing');
-    el.textContent = state.currentSeat === mySeat
+    el.textContent = activeSeat === mySeat
       ? (state.phase === 'bidding' ? 'Your bid' : (state.phase === 'trump_selection' ? 'Choose trump' : 'Your turn'))
       : `${name} is ${actionText}...`;
     el.classList.add('visible');
@@ -1298,7 +1301,6 @@ function renderRoundEnd(state) {
   // Per-player + team breakdown for Judgement
   const playerBreakdown = isJudgement && state.bids
     ? (() => {
-        const bids = state.bids || [];
         const tricks = state.tricks || [];
         const team0Tricks = (tricks[0] || 0) + (tricks[2] || 0);
         const team1Tricks = (tricks[1] || 0) + (tricks[3] || 0);
@@ -1313,17 +1315,7 @@ function renderRoundEnd(state) {
         const cName = cTeam === 0 ? team0Name : team1Name;
         const dName = dTeam === 0 ? team0Name : team1Name;
 
-        // Individual bid lines (informational — no ✓/✗ since bid is team-based)
-        const playerLines = (state.players || []).map((p, s) => {
-          const name = safeName(p, SEAT_LABELS[s]);
-          const bid = bids[s];
-          if (bid === null || bid === undefined) return '';
-          return `<div class="round-score-row indent"><span>${name}</span><span>Bid ${bid}</span></div>`;
-        }).filter(Boolean).join('');
-
         return `
-          <div class="round-score-row round-score-divider"><span>Individual Bids</span><span></span></div>
-          ${playerLines}
           <div class="round-score-row round-score-divider"><span>Team Results</span><span></span></div>
           <div class="round-score-row"><span>${cName} (Contract)</span><span>Needed ${cTarget} / Took ${cTricks} ${cHit}</span></div>
           <div class="round-score-row"><span>${dName} (Defenders)</span><span>Needed ${dTarget} / Took ${dTricks} ${dHit}</span></div>

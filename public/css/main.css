@@ -645,8 +645,8 @@ input[type="text"] {
 .turn-indicator {
   position: absolute;
   top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 16px;
+  transform: none;
   font-size: var(--fs-md);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -685,7 +685,8 @@ input[type="text"] {
 .game-leave-btn {
   position: absolute;
   top: 12px;
-  left: 16px;
+  right: 76px;
+  left: auto;
   z-index: 55;
   background: rgba(8, 16, 39, 0.82);
   border: 1px solid var(--panel-border);
@@ -1142,6 +1143,7 @@ input[type="text"] {
 .m-middle-row {
   flex: 1;
   min-height: 0;
+  display: flex;
 }
 
 /* Side zones (W / E) — superseded by .m-player-overlay */
@@ -1304,7 +1306,7 @@ input[type="text"] {
 body.is-mobile .lobby-columns           { grid-template-columns: 1fr; gap: 14px; }
 body.is-mobile .lobby-col-right         { border-left: none; padding-left: 0; border-top: 1px solid var(--panel-border); padding-top: 14px; }
 body.is-mobile .lobby-panel.wide        { width: 96vw; max-height: none; }
-body.is-mobile .avatar-grid             { grid-template-columns: repeat(4, 1fr); }
+body.is-mobile .avatar-grid             { grid-template-columns: repeat(6, 1fr); }
 body.is-mobile .game-grid               { gap: 8px; }
 body.is-mobile #gameTable               { display: none !important; }
 
@@ -1318,9 +1320,13 @@ body.is-mobile .m-trick-area .trick-card { padding: 4px; }
 body.is-mobile .m-trick-area .trick-card .rank { font-size: 15px; }
 body.is-mobile .m-trick-area .trick-card .suit-mini { font-size: 12px; }
 
-body.is-mobile .avatar-btn img { max-width: 60px; height: auto; }
+body.is-mobile .avatar-btn img { width: 40px; height: 40px; object-fit: contain; }
+body.is-mobile .avatar-btn { padding: 4px 2px; }
+body.is-mobile .avatar-btn span { display: none; }
 body.is-mobile .game-grid { grid-template-columns: 1fr 1fr; }
-body.is-mobile .avatar-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 4px; }
+body.is-mobile .avatar-grid { grid-template-columns: repeat(6, 1fr) !important; gap: 4px; }
+body.is-mobile .m-hand-area .card:hover,
+body.is-mobile .m-hand-area .card:active { transform: none; z-index: auto; }
 
 
 
