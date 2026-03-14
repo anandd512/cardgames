@@ -1246,6 +1246,7 @@ function handleBidTrumpAnnouncement(prev, next) {
     }
   }
   return 0;
+}
 
 function showBidTrumpBanner(text) {
   showBidTrumpBannerHTML(text);
