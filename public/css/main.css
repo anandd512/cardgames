@@ -1153,3 +1153,18 @@ body.is-mobile .lobby-panel.wide        { width: 96vw; max-height: none; }
 body.is-mobile .avatar-grid             { grid-template-columns: repeat(4, 1fr); }
 body.is-mobile .game-grid               { gap: 8px; }
 body.is-mobile #gameTable               { display: none !important; }
+
+/* Mobile Card Overrides */
+body.is-mobile .card .pip-center { display: none !important; }
+body.is-mobile .card .rank { font-size: 20px; line-height: 1; }
+body.is-mobile .card .suit-mini { font-size: 16px; }
+body.is-mobile .card { padding: 4px 6px; }
+
+body.is-mobile .m-trick-area .trick-card { padding: 4px; }
+body.is-mobile .m-trick-area .trick-card .rank { font-size: 15px; }
+body.is-mobile .m-trick-area .trick-card .suit-mini { font-size: 12px; }
+
+body.is-mobile .avatar-btn img { max-width: 60px; height: auto; }
+body.is-mobile .game-grid { grid-template-columns: 1fr 1fr; }
+body.is-mobile .avatar-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 4px; }
+

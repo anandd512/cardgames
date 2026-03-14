@@ -542,21 +542,48 @@ function loadMusicPrefs() {
 loadMusicPrefs();
 applyMusicSettings();
 
+let turnDelayTimer = null;
+let latestGameState = null;
+
 socket.on('gameState', (state) => {
   selectedGame = state.gameType || selectedGame;
   handleStateSfx(lastState, state);
   handleBidFlash(lastState, state);
   handleBidTrumpAnnouncement(lastState, state);
+  latestGameState = state;
+
+  const wasSamePhase = lastState && lastState.phase === state.phase;
+  const seatChanged = lastState && lastState.currentSeat !== state.currentSeat;
+  const isPlayingOrBidding = state.phase === 'playing' || state.phase === 'bidding';
+
   lastState = state;
   updateWaitingRoomTheme(state);
+  
   if (screens.waitingRoom.classList.contains('active')) {
     renderWaitingRoom(state);
     if (state.phase !== 'waiting') showScreen('gameTable');
   }
-  const isGameVisible = (screens.gameTable && screens.gameTable.classList.contains('active'))
-    || (screens.mobileGame && screens.mobileGame.classList.contains('active'));
+  
+  const isGameVisible = (screens.gameTable && screens.gameTable.classList.contains('active')) || 
+                        (screens.mobileGame && screens.mobileGame.classList.contains('active'));
+  
   if (isGameVisible) {
-    renderTable(state);
+    if (wasSamePhase && seatChanged && isPlayingOrBidding) {
+      // Pause 1 second before highlighting next person's turn visually
+      const fakeState = JSON.parse(JSON.stringify(state));
+      // Give it an invalid seat so no one highlights 'Your turn'
+      fakeState.currentSeat = -1;
+      
+      renderTable(fakeState);
+      
+      clearTimeout(turnDelayTimer);
+      turnDelayTimer = setTimeout(() => {
+        if (latestGameState) renderTable(latestGameState);
+      }, 1000);
+    } else {
+      clearTimeout(turnDelayTimer);
+      renderTable(state);
+    }
   }
 });
 
